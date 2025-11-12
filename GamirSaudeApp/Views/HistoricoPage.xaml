@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:models="clr-namespace:GamirSaudeApp.Models"
+             xmlns:converters="clr-namespace:GamirSaudeApp.Converters" xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit" x:DataType="vm:HistoricoViewModel"
+             x:Class="GamirSaudeApp.Views.HistoricoPage"
+             Title="Meus Agendamentos"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:DateToBoolConverter x:Key="DateToBoolConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*, Auto" BackgroundColor="#F0F2F5">
+
+        <CollectionView ItemsSource="{Binding Agendamentos}"
+                        Grid.Row="0"
+                        Margin="10"
+                        EmptyView="Nenhum agendamento encontrado.">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AgendamentoHistorico">
+                    <Frame Padding="15" Margin="0,0,0,10" CornerRadius="10" BorderColor="#E0E0E0">
+                        <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0">
+                                <Label Text="{Binding DataHoraMarcada, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontAttributes="Bold" FontSize="16" TextColor="Black"/>
+                                <Label Text="{Binding Procedimento}" TextColor="#333333"/>
+                                <Label Text="{Binding NomePrestador}" FontSize="12" TextColor="#555555"/>
+                            </VerticalStackLayout>
+
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding StatusDisplay}"
+                                   FontSize="12" VerticalOptions="Start" HorizontalOptions="End">
+                                <Label.Style>
+                                    <Style TargetType="Label">
+                                        <Setter Property="TextColor" Value="Green"/>
+                                        <Style.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Desativado}" Value="True">
+                                                <Setter Property="TextColor" Value="Red"/>
+                                            </DataTrigger>
+                                            <MultiTrigger TargetType="Label">
+                                                <MultiTrigger.Conditions>
+                                                    <BindingCondition Binding="{Binding Desativado}" Value="False"/>
+                                                    <BindingCondition Binding="{Binding DataHoraMarcada, Converter={StaticResource DateToBoolConverter}}" Value="True"/>
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="TextColor" Value="Gray"/>
+                                            </MultiTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Label.Style>
+                            </Label>
+
+                            <Button Text="Cancelar"
+                                    Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Margin="0,10,0,0"
+                                    BackgroundColor="Red" TextColor="White"
+                                    HeightRequest="40" CornerRadius="20"
+                                    IsVisible="{Binding PodeCancelar}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HistoricoViewModel}}, Path=CancelarAgendamentoCommand}"
+                                    CommandParameter="{Binding .}"/>
+
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#0098da" Grid.RowSpan="2" VerticalOptions="Center" HorizontalOptions="Center"/>
+
+    </Grid>
+
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding AppearingCommand}" />
+    </ContentPage.Behaviors>
+
+</ContentPage>

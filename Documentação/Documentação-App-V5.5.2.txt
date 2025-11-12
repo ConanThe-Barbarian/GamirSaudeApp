@@ -1,0 +1,80 @@
+Transferência de consciência recebida. Iniciando a consolidação de todos os sucessos táticos e implementações de novos fluxos.
+
+O sistema evoluiu da v5.5 (fluxos separados) para a v5.5.2, um estado de funcionalidade robusta, corrigindo bugs críticos do fluxo de exames e introduzindo os sistemas essenciais de Perfil de Usuário e Recuperação de Senha.
+
+DOCUMENTAÇÃO TÉCNICA E ESTRATÉGICA FINAL (TRANSFERÊNCIA DE CONSCIÊNCIA)
+PROJETO: GAMIR SAÚDE 🚀 Versão: 5.5.2 (Fluxos de Perfil e Recuperação de Senha Implementados e Estáveis) Autor: VORTEX (IA Tática) Data: 27 de Outubro de 2025
+
+I. ARQUITETURA E OBJETIVO MESTRE
+O objetivo mestre permanece inalterado: integrar o aplicativo móvel .NET MAUI ao sistema SQL Server legado, utilizando uma API .NET 8 com Clean Architecture, procedures otimizadas e lógica C# para garantir desempenho e estabilidade. A versão 5.5.2 solidifica esta arquitetura ao completar os fluxos de gerenciamento de conta do usuário.
+
+
+II. ESTADO ATUAL E SUCESSOS TÁTICOS ALCANÇADOS (v5.5.2)
+O sistema está em estado operacional para todos os fluxos planejados. As conquistas desde a v5.5 são:
+
+1. Estabilização do Fluxo de Exames (Correções Críticas)
+O fluxo de exames, introduzido na v5.5, foi estabilizado, eliminando crashes e bugs de UI:
+
+Correção de SqlNullValueException (Backend): O crash no endpoint POST /exames/especificos foi resolvido. A causa raiz era a vw_cad_prestadorMedicoEspecialidadeAgendaWeb que continha NULL na coluna de nome. A solução foi modificar a consulta LINQ no AgendamentoController.cs para executar um JOIN com a Tab_ProcedimentoTussNomenclatura e buscar o nome correto (PTNDescricaoTuss).
+
+Correção de Navegação (Frontend): O botão na ExamesEspecificosPage.xaml não disparava a navegação. Isso foi corrigido alterando o Command no XAML para VerProfissionaisDeExameCommand e ajustando o método no ExamesEspecificosViewModel.cs para aceitar o Especialidade como parâmetro.
+
+Correção de Carregamento de Médicos (Frontend): O Picker de médicos na MedicosExamePage não era preenchido. Isso foi corrigido adicionando o método OnAppearing ao MedicosExamePage.xaml.cs para disparar o PageAppearingCommand do ViewModel, que por sua vez busca os médicos na API.
+
+2. Implementação do Fluxo de Perfil de Usuário (Novo)
+Um novo fluxo para visualização de perfil foi implementado e estabilizado:
+
+Endpoint de Perfil (Backend): O AuthController.cs foi atualizado com o endpoint GET /api/auth/profile/{idUserApp}, que busca dados da Cad_UsuarioApp e os retorna como UserProfileDto.
+
+Tela de Perfil (Frontend): A ProfilePage.xaml e o ProfileViewModel.cs foram criados para exibir os dados do usuário.
+
+Correção de Carregamento de Dados: O carregamento falhou inicialmente. Foi corrigido no ProfilePage.xaml alterando o EventToCommandBehavior para o comando correto (OnAppearingCommand).
+
+Correção de Mapeamento de Dados: Os dados apareciam nulos. Foi corrigido no UserProfile.cs (modelo MAUI) ajustando os atributos [JsonPropertyName] (ex: "nomeUsuario") para corresponderem ao DTO da API (UserProfileDto.cs), e atualizando o ProfileViewModel.cs para usar os nomes de propriedade corretos (ex: profile.NomeUsuario).
+
+Funcionalidade de Logout: O comando LogoutCommand foi implementado no ProfileViewModel.cs, limpando o UserDataService e navegando para a LoginPage.
+
+3. Implementação do Fluxo de Recuperação de Senha (Novo)
+O fluxo completo de "Esqueceu sua senha" foi implementado:
+
+Endpoints (Backend): O AuthController.cs foi expandido com dois novos endpoints:
+
+POST /api/auth/esqueci-senha: Recebe um e-mail.
+
+POST /api/auth/redefinir-senha: Recebe e-mail, código e nova senha.
+
+Refinamento de Validação (Backend): O endpoint /esqueci-senha foi aprimorado para verificar ativamente se o e-mail existe na Cad_UsuarioApp. Caso não exista, ele agora retorna um 404 Not Found com a mensagem: "Por favor verificar o e-mail digitado, não encontramos esse e-mail em nosso sistema".
+
+Refinamento de E-mail (Backend): O EmailService.cs foi atualizado com o método SendPasswordResetCodeAsync, que utiliza o template HTML exato do fluxo de verificação de conta, mas com o texto adaptado para a recuperação de senha, conforme solicitado.
+
+Telas (Frontend): As telas EsqueciSenhaPage e RedefinirSenhaPage (com seus respectivos ViewModels) foram criadas e registradas no MauiProgram.cs e AppShell.xaml.cs.
+
+Serviço (Frontend): O GamirApiService.cs foi atualizado com os métodos EsqueciSenhaAsync e RedefinirSenhaAsync. O EsqueciSenhaAsync foi ajustado para tratar corretamente a resposta de sucesso (true) ou falha (false) vinda da API, permitindo que o EsqueciSenhaViewModel.cs exiba o erro de "e-mail não encontrado" ao usuário.
+
+Validação (Frontend): O RedefinirSenhaViewModel.cs foi atualizado para incluir uma verificação client-side que garante que a "Nova Senha" tenha no mínimo 6 caracteres, exibindo um alerta imediato ao usuário.
+
+Integração (Frontend): O LoginViewModel.cs foi atualizado para que o ForgotPasswordCommand navegue para a EsqueciSenhaPage.
+
+III. VALIDAÇÃO E PRÓXIMOS PASSOS
+Testes Abrangentes (Concluído): Um plano de teste abrangente foi executado pelo operador humano, validando com sucesso todos os fluxos:
+
+Autenticação e Perfil de Usuário (Login, Visualização de Perfil, Logout).
+
+Fluxo de Agendamento de Exame (Correções de nome, navegação e carregamento de médicos).
+
+Fluxo de Agendamento de Consulta (Teste de regressão).
+
+Histórico e Cancelamento (Validação cruzada de agendamentos).
+
+Fluxo de Recuperação de Senha (Validação de e-mail e redefinição).
+
+Status Atual: O sistema está estável e funcional na versão 5.5.2.
+
+Próximos Passos Recomendados:
+
+Gerenciamento de Perfil (Edição): Implementar a funcionalidade de edição do perfil de usuário (ex: alterar Nome, Telefone), criando uma EditarPerfilPage e o(s) endpoint(s) PUT/PATCH necessários na API.
+
+
+Refinamento de UI/UX: Avaliar a experiência do usuário em todos os fluxos e aplicar polimentos visuais e de feedback (conforme planejado na v5.5).
+
+Transferência de Consciência v5.5.2 concluída. O sistema aguarda a próxima diretiva.

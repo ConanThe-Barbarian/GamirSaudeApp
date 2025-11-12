@@ -1,0 +1,116 @@
+ DOCUMENTAÇÃO MESTRA DE PROJETO: A SAGA DO APLICATIVO GAMIR SAÚDE 🚀
+Versão: 4.0 (Marco: Fluxo de Agendamento Dinâmico Concluído)
+Data: 14 de Outubro de 2025
+Autor: VORTEX V3.0 (Arquiteto de Soluções e Mentor Full-Stack)
+Propósito: Este documento é o registro definitivo e absurdamente detalhado da jornada de desenvolvimento do aplicativo Gamir Saúde. Ele disseca a arquitetura, o código-fonte, as decisões críticas e o histórico de cada bug esmagado, servindo como a fonte da verdade absoluta para qualquer desenvolvedor ou IA que assuma este legado.
+
+I. FILOSOFIA E ARQUITETURA GERAL: A FUNDAÇÃO
+A estratégia desde o início foi a separação total de responsabilidades. O sistema é dividido em duas fortalezas que se comunicam por uma ponte RESTful.
+
+1.1. O Backend (API RESTful): O Cérebro de Aço
+Construído com .NET 8, C# 12 e Entity Framework Core 8, ele segue a Clean Architecture, uma disciplina de guerra que garante que a lógica de negócio não seja contaminada por detalhes de infraestrutura.
+
+GamirSaude.Domain (O Coração Sagrado):
+
+Propósito: Contém as leis do nosso universo. As classes de Entidades (espelhos das tabelas do banco) e as Interfaces de repositórios vivem aqui. Este projeto não conhece e não depende de ninguém.
+
+Classes Cruciais Criadas: Paciente.cs, Especialidade.cs, PrestadorMedico.cs, Agenda.cs, e as mais importantes: AgendaWebView.cs (para as regras de agendamento) e AgendaView.cs (para o histórico de agendamentos).
+
+Mapeamento de Dados: Usamos "Data Annotations" ([Table], [Key], [Column]) para mapear precisamente as classes C# às tabelas e colunas com nomes legados do banco SQL Server. Esta foi a chave para resolver 90% dos erros de banco de dados.
+
+GamirSaude.Infrastructure (As Ferramentas Pesadas):
+
+Propósito: A sala de máquinas. Contém o GamirSaudeDbContext.cs, que é o tradutor oficial entre C# e SQL, e as implementações concretas dos repositórios. É aqui que o Entity Framework Core faz sua mágica.
+
+GamirSaude.Application (O Tático):
+
+Propósito: Onde a estratégia é definida. Contém a lógica de negócio e, crucialmente, os DTOs (Data Transfer Objects).
+
+Pastas Criadas: DTOs.
+
+Classes Cruciais Criadas: DiasDisponiveisRequest.cs, HorariosDisponiveisRequest.cs, AgendamentoRequestDto.cs. Estas classes são os "envelopes" que carregam as informações entre o frontend e o backend.
+
+GamirSaude.API (A Linha de Frente):
+
+Propósito: A interface com o mundo exterior. Expõe os Controllers e seus Endpoints (as URLs que o nosso app chama).
+
+Controllers Criados: AuthController.cs e AgendamentoController.cs.
+
+1.2. O Frontend (App Móvel): A Experiência do Usuário
+Construído com .NET MAUI, ele segue o padrão MVVM (Model-View-ViewModel), garantindo que a interface (View) seja completamente "burra", apenas um reflexo do estado do seu cérebro (ViewModel).
+
+Models: Classes simples que são moldes para os dados da API (ex: Medico.cs, TipoExame.cs).
+
+Views: As telas, construídas em XAML. Contêm a aparência e o layout.
+
+ViewModels: O cérebro de cada tela. Contém toda a lógica e estado (propriedades). Usamos a biblioteca CommunityToolkit.Mvvm para acelerar com os atributos [ObservableProperty] e [RelayCommand].
+
+Services: A camada de comunicação. GamirApiService.cs é nosso ponto de contato com o backend. UserDataService.cs é a memória global que guarda os dados do paciente logado.
+
+Converters: Utilitários para transformar dados no XAML (ex: InverseBoolConverter).
+
+II. A JORNADA DE CONSTRUÇÃO: CADA TABELA, CADA CLIQUE
+2.1. A Tabela Mestra: vw_cad_prestadorMedicoEspecialidadeAgendaWeb
+Esta VIEW no SQL Server se tornou a espinha dorsal de todo o fluxo de agendamento. Após diversas refatorações, ela agora é um JOIN completo que une múltiplas tabelas (Cad_PrestadorMedico, Cad_PrestadorMedicoEspecialidade, Cad_ANSCbos, Cad_PrestadorMedicoEspecialidadeProcedimento, Tab_ProcedimentoTussNomenclatura) e contém todas as regras de negócio em um só lugar:
+
+Dados do médico (PrestadorMedico)
+
+Dados da especialidade (EspecialidadeCBOS)
+
+Agrupador de Exames: A crucial coluna DescricaoAgenda.
+
+Descrição Específica do Procedimento: A coluna PTNDescricaoTuss.
+
+Valor do Procedimento: A coluna PTNValCustoProcedimento (renomeada como Valor).
+
+Regras de expediente: Dias da semana que trabalha (Segunda, Terca), horários de início, fim e almoço.
+
+Regras de capacidade: Quantidade máxima de agendamentos por dia (SegundaQuantidadeMaxima).
+
+Duração da consulta: O campo EscalaAgendaEspecialidade (renomeado como EscalaAgenda).
+
+Lição Aprendida: Centralizar a lógica de busca de regras em uma View robusta no banco de dados simplifica drasticamente o código C#, melhora a performance e facilita a manutenção.
+
+2.2. O Fluxo de Agendamento de Consultas (100% Funcional)
+Login e Dashboard: Autenticação e navegação inicial. O UserDataService (Singleton) armazena o ID e nome do paciente.
+
+Seleção de Especialidade (AgendarConsultaPage): O PageAppearingCommand chama GET /api/agendamento/especialidades. O endpoint lê a AgendaWebView, retorna uma lista única de especialidades com seus IdProcedimento associados.
+
+Navegação para Médicos: Ao selecionar uma especialidade, o VerProfissionaisCommand navega para MedicosDisponiveisPage, passando EspecialidadeNome e IdProcedimento como parâmetros de rota.
+
+Seleção de Médico, Dia e Hora (MedicosDisponiveisPage): A tela carrega os médicos daquela especialidade. Ao selecionar um médico, o calendário é preenchido dinamicamente via POST /dias-disponiveis. Ao selecionar um dia, os horários são preenchidos via POST /horarios-disponiveis.
+
+Agendamento: O AgendarConsultaCommand envia todos os dados (incluindo IdPaciente do UserDataService) para o endpoint POST /api/agendamento, que cria uma nova linha na tabela Cad_Agenda.
+
+Sucesso: O app navega para a AgendamentoSucessoPage, que exibe uma animação GIF.
+
+2.3. O Fluxo de Agendamento de Exames (Em Construção)
+Dashboard: O botão "Agendar Exame" agora navega para a nova AgendarExamePage.
+
+Seleção do TIPO de Exame (AgendarExamePage): A tela carrega com um Picker. O PageAppearingCommand chama o novo endpoint GET /api/agendamento/exames/tipos, que lê a coluna DescricaoAgenda da AgendaWebView para popular o Picker (ex: "DENSITOMETRIA", "MAMOGRAFIA").
+
+Próximo Passo (Onde Paramos): Ao clicar em "Ver exames disponíveis", o ViewModel está pronto para navegar para a ExamesEspecificosPage, passando o nome do tipo de exame selecionado.
+
+III. HISTÓRICO DE GUERRA: BUGS CRÍTICOS ESMAGADOS
+O Bug da "Memória" (Singleton vs. Transient): Telas de agendamento guardavam dados antigos. Solução: Alteramos o registro de DI das páginas e ViewModels de AddSingleton para AddTransient no MauiProgram.cs.
+
+O Bug da Tela Branca (A "Cola"): Novas telas navegavam, mas apareciam vazias. Causa: Falta do código no arquivo .xaml.cs para injetar o ViewModel no BindingContext e para executar o PageAppearingCommand no evento OnAppearing.
+
+O Bug do HotReloadException: API quebrava após alterarmos a assinatura de um método. Solução: Disciplina de Parar (Shift+F5), Recompilar e Executar (F5) sempre que a assinatura de um endpoint da API é alterada.
+
+O Bug do Mapeamento SQL (Nome de coluna inválido): A API falhava ao tentar ler colunas que não existiam na View ou tinham nomes diferentes. Solução: Atualizamos a VIEW no SQL Server para incluir todas as colunas necessárias (PTNDescricaoTuss, PTNValCustoProcedimento) e usamos aliases (AS) para compatibilizar nomes (Descricao AS DescricaoAgenda).
+
+O Bug da "Perda de Contexto": Selecionar "Consulta" (ID 1) para um Geriatra listava médicos de todas as especialidades. Solução: Refatoramos o endpoint de busca de profissionais para aceitar um filtro duplo: GET /exames/profissionais/{especialidade}/{idProcedimento}, garantindo a precisão da busca.
+
+IV. PRÓXIMOS PASSOS IMEDIATOS: A CONQUISTA DO FLUXO DE EXAMES
+Nossa posição é forte. O backend está pronto e a primeira tela de exames funciona. A próxima fase da operação é:
+
+Construir a Tela de Exames Específicos: Implementar o XAML da ExamesEspecificosPage para exibir a lista de exames que vêm do endpoint GET /exames/especificos/{tipoExame}.
+
+Implementar a Lógica de Valor: Adicionar a lógica de exibição do valor do exame e o botão de confirmação, como planejado.
+
+Conectar a Navegação Final: Fazer com que o botão "Confirmar e ver profissionais" navegue para a tela MedicosDisponiveisPage, passando os parâmetros EspecialidadeNome (que neste fluxo será o nome do exame específico) e IdProcedimento.
+
+Teste de Reutilização: Validar que a tela MedicosDisponiveisPage funciona perfeitamente com os dados do fluxo de exames, reutilizando toda a lógica de calendário e horários que já construímos.
+
+A vitória está ao nosso alcance. AVANÇAR!

@@ -1,0 +1,64 @@
+DOCUMENTAÇÃO MESTRA: PROJETO GAMIR SAÚDE
+Versão: Final de Agendamento (6.0)
+Data: 09 de Outubro de 2025
+Autor: Vortex (Mentor de Desenvolvimento Full-Stack)
+
+1. Visão Geral da Arquitetura
+O projeto é construído sobre uma arquitetura robusta de ponta a ponta:
+
+Camada	Tecnologia Principal	Padrão Utilizado	Objetivo Principal
+Frontend (App)	.NET MAUI / C# / XAML	MVVM (CommunityToolkit.Mvvm)	Gerenciar o estado da UI, realizar chamadas assíncronas e navegar.
+Backend (API)	C# / .NET 8 / ASP.NET Core	Clean Architecture	Centralizar a lógica de negócio, validar dados e interagir com o SQL Server.
+Acesso a Dados	Entity Framework Core	Mapeamento de Banco Legado	Traduzir consultas LINQ para SQL e gerenciar transações.
+
+Exportar para as Planilhas
+Decisões Cruciais de Configuração
+Injeção de Dependência: As páginas e ViewModels do fluxo de agendamento (AgendarConsulta, MedicosDisponiveis, AgendamentoSucesso) foram configuradas como Transient no MauiProgram.cs para garantir que sejam criadas novas instâncias a cada visita, prevenindo o problema de dados antigos (estado salvo).
+
+Estado do Usuário: O serviço UserDataService foi registrado como Singleton para armazenar e manter o IdPaciente e NomeUsuario do paciente logado por toda a sessão do aplicativo.
+
+Roteamento: A navegação foi ajustada para usar rotas relativas (nameof(AgendamentoSucessoPage)), resolvendo o erro do MAUI com rotas absolutas (///).
+
+2. Modelagem do Banco de Dados (SQL Server)
+O sistema interage com um banco de dados SQL Server legado. O mapeamento preciso das colunas foi essencial para o sucesso do projeto.
+
+Tabela/View SQL	Entidade C#	Propósito Detalhado
+Cad_Paciente	Paciente	Fonte de dados para a autenticação. O IdPaciente é crucial para o agendamento.
+Cad_Agenda	Agenda	Tabela de destino final. Onde o registro da consulta é inserido.
+Tab_ProcedimentoTussNomenclatura	N/A (Validação)	Tabela de validação de Chave Estrangeira. Garante que o IdProcedimento existe.
+Cad_PrestadorMedico	PrestadorMedico	Contém informações dos médicos (IdPrestadorMedico, PrestadorMedico).
+vw_cad_prestadorMedicoEspecialidadeAgendaWeb	AgendaWebView	VIEW DE PERFORMANCE. Centraliza a consulta de Especialidades, Médicos e as Regras de Agendamento (dias e vagas) para simplificar a lógica do Backend.
+
+Exportar para as Planilhas
+Estrutura de Entidades (Domain/Infrastructure)
+Arquivo/Entidade	Propriedades Chave	Uso no Fluxo
+AgendaWebView.cs	idPrestadorMedico, EspecialidadeCBOS, Segunda, QuartaQuantidadeMaxima, idProcedimentoTussNomenclatura	Recebe todas as regras de agendamento do DB, incluindo o ID do Procedimento que o App irá agendar.
+Agenda.cs	IdPaciente, IdPrestadorMedico, DataHoraMarcada, IdProcedimentoTussNomenclatura, Minutos	Mapeia as colunas necessárias para inserir o novo agendamento.
+
+Exportar para as Planilhas
+3. Fluxo Funcional de Agendamento (Camada por Camada)
+3.1. Frontend: ViewModels e Lógica de Transição
+Arquivo/ViewModel	Ação ao Iniciar	Lógica de Transição
+AgendarConsultaViewModel.cs	Carrega Especialidades da API.	partial void OnEspecialidadeSelecionadaChanged: Capta o EspecialidadeSelecionada.IdProcedimento e armazena-o. [RelayCommand] VerProfissionais: Navega, passando EspecialidadeNome E IdProcedimento via QueryString.
+MedicosDisponiveisViewModel.cs	Recebe EspecialidadeNome e IdProcedimento via [QueryProperty].	partial void OnMedicoSelecionadoChanged: Chama a API para calcular os dias disponíveis (/dias-disponiveis). [RelayCommand] SelecionarDia: Chama a API para buscar horários (/horarios-disponiveis), usando o IdProcedimento.
+
+Exportar para as Planilhas
+3.2. Backend: Endpoints e Validação de Dados
+Endpoint	DTO de Requisição/Recebimento	Lógica Implementada
+GET /especialidades	Retorna {Id, Nome, IdProcedimento}	Consulta a AgendaWebView, retorna o ID do Procedimento dinâmico associado.
+POST /dias-disponiveis	DiasDisponiveisRequest	Encontra regras semanais na AgendaWebView, calcula VagasRestantes e retorna a lista de dias com Status (Disponivel/PoucasVagas).
+POST /agendamento	AgendamentoRequestDto	Persistência Final: Mapeia IdPaciente (dinâmico do App), DataHoraMarcada e IdProcedimento (dinâmico do App) para a entidade Agenda e chama _context.SaveChangesAsync().
+
+Exportar para as Planilhas
+4. Correções Críticas (Onde a Magia Aconteceu)
+O projeto foi marcado por uma série de depurações que transformaram falhas em sucesso:
+
+Falha/Sintoma	Causa Raiz	Solução (Ficheiro e Trecho)
+ID de Procedimento Fixo	O App estava a enviar IdProcedimento: 1 ou 35.	AgendarConsultaViewModel.cs: Alterado o VerProfissionaisCommand para passar &IdProcedimento={EspecialidadeSelecionada.IdProcedimento}.
+Erro Final de Agendamento	O App falhava ao enviar o ID real (15505), mas o Swagger funcionava.	GamirApiService.cs: Adicionada a leitura do corpo do erro 500 (errorContent) para expor a causa raiz. O problema de dados foi resolvido no Backend.
+Navegação Quebrada	Uso de rota absoluta (///AgendamentoSucessoPage) dentro da pilha de navegação.	MedicosDisponiveisViewModel.cs: Navegação corrigida para await Shell.Current.GoToAsync(nameof(AgendamentoSucessoPage)).
+Dados Invisíveis (Calendário)	Conflito entre Triggers (DataTrigger) e o Label dentro do Border no XAML.	MedicosDisponiveisPage.xaml: Movida a lógica de cor de texto para os Label.Triggers (filho) para garantir a visibilidade sobre fundos coloridos.
+State Salvo	As telas AgendarConsulta e MedicosDisponiveis estavam como Singleton.	MauiProgram.cs: Alterada a injeção para AddTransient para forçar a recarga do estado em cada navegação.
+
+Exportar para as Planilhas
+Este documento serve como o seu passaporte completo para o projeto. O fluxo de agendamento está pronto para ser utilizado e o próximo passo é implementar o cálculo real de horários no endpoint POST /api/agendamento/horarios-disponiveis.

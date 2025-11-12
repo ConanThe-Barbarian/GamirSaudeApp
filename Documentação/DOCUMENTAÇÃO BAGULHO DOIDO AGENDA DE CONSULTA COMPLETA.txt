@@ -1,0 +1,196 @@
+💣 DOCUMENTAÇÃO MESTRA DE PROJETO: A SAGA DO APLICATIVO GAMIR SAÚDE 🚀
+Versão: 4.0 (Marco: Fluxo de Agendamento Dinâmico Concluído)
+Data: 08 de Outubro de 2025
+Autor: VORTEX V3.0 (Arquiteto de Soluções e Mentor Full-Stack)
+Propósito: Este documento é o registro definitivo e absurdamente detalhado da jornada de desenvolvimento do aplicativo Gamir Saúde. Ele disseca a arquitetura, o código-fonte, as decisões críticas e o histórico de cada bug esmagado, servindo como a fonte da verdade absoluta para qualquer desenvolvedor ou IA que assuma este legado.
+
+I. FILOSOFIA E ARQUITETURA GERAL: A FUNDAÇÃO
+A estratégia desde o início foi a separação total de responsabilidades. O sistema é dividido em duas fortalezas que se comunicam por uma ponte RESTful.
+
+1.1. O Backend (API RESTful): O Cérebro de Aço
+Construído com .NET 8, C# 12 e Entity Framework Core 8, ele segue a Clean Architecture, uma disciplina de guerra que garante que a lógica de negócio não seja contaminada por detalhes de infraestrutura.
+
+GamirSaude.Domain (O Coração Sagrado):
+
+Propósito: Contém as leis do nosso universo. As classes de Entidades (espelhos das tabelas do banco) e as Interfaces de repositórios vivem aqui. Este projeto não conhece e não depende de ninguém.
+
+Classes Cruciais Criadas: Paciente.cs, Especialidade.cs, PrestadorMedico.cs, Agenda.cs, PrestadorMedicoEspecialidade.cs, e a mais importante: AgendaWebView.cs.
+
+Mapeamento de Dados: Usamos "Data Annotations" ([Table], [Key], [Column]) para mapear precisamente as classes C# às tabelas e colunas com nomes legados do banco SQL Server. Esta foi a chave para resolver 90% dos erros de banco de dados.
+
+GamirSaude.Infrastructure (As Ferramentas Pesadas):
+
+Propósito: A sala de máquinas. Contém o GamirSaudeDbContext.cs, que é o tradutor oficial entre C# e SQL, e as implementações concretas dos repositórios (ex: PacienteRepository.cs). É aqui que o Entity Framework Core faz sua mágica.
+
+GamirSaude.Application (O Tático):
+
+Propósito: Onde a estratégia é definida. Contém a lógica de negócio e, crucialmente, os DTOs (Data Transfer Objects).
+
+Pastas Criadas: DTOs.
+
+Classes Cruciais Criadas: DiasDisponiveisRequest.cs, HorariosDisponiveisRequest.cs, AgendamentoRequestDto.cs. Estas classes são os "envelopes" que carregam as informações entre o frontend e o backend.
+
+GamirSaude.API (A Linha de Frente):
+
+Propósito: A interface com o mundo exterior. Expõe os Controllers e seus Endpoints (as URLs que o nosso app chama).
+
+Controllers Criados: AuthController.cs e AgendamentoController.cs.
+
+1.2. O Frontend (App Móvel): A Experiência do Usuário
+Construído com .NET MAUI, ele segue o padrão MVVM (Model-View-ViewModel), garantindo que a interface (View) seja completamente burra, apenas um reflexo do estado do seu cérebro (ViewModel).
+
+Models: Classes simples que são moldes para os dados recebidos da API (ex: Medico.cs, DiaDisponivel.cs).
+
+Views: As telas, construídas em XAML. Contêm a aparência e o layout.
+
+ViewModels: O cérebro de cada tela. Contém toda a lógica e estado (propriedades). Usamos a biblioteca CommunityToolkit.Mvvm para acelerar com os atributos [ObservableProperty] e [RelayCommand].
+
+Services: A camada de comunicação. GamirApiService.cs é o nosso único ponto de contato com o backend. UserDataService.cs é a memória global que guarda os dados do paciente logado.
+
+II. A JORNADA DE CONSTRUÇÃO: CADA TABELA, CADA CLIQUE
+2.1. A Tabela Mestra: vw_cad_prestadorMedicoEspecialidadeAgendaWeb
+Esta VIEW no SQL Server se tornou a espinha dorsal de todo o fluxo de agendamento. Ela é um JOIN pré-compilado de múltiplas tabelas (Cad_PrestadorMedico, Cad_PrestadorMedicoEspecialidade, etc.) e contém todas as informações necessárias em um só lugar:
+
+Dados do médico (PrestadorMedico, idPrestadorMedico)
+
+Dados da especialidade (EspecialidadeCBOS)
+
+Regras de expediente: Dias da semana que trabalha (Segunda, Terca...), horários de início e fim (SegundaHoraInicio, SegundaHoraFim), e os cruciais horários de almoço (SegundaAlmoco, SegundaAlmocoinicio...).
+
+Regras de capacidade: Quantidade máxima de agendamentos por dia (SegundaQuantidadeMaxima).
+
+Duração da consulta: O campo EscalaAgenda, que define quantos minutos dura cada slot de agendamento.
+
+Lição Aprendida: Centralizar a lógica de busca de dados em uma View no banco simplificou drasticamente o código C# no backend.
+
+2.2. O Fluxo de Agendamento: Passo a Passo Detalhado
+Login (LoginPage -> LoginViewModel):
+
+O usuário insere CPF/Senha.
+
+O LoginCommand chama GamirApiService.LoginAsync().
+
+O serviço faz um POST para /api/auth/login.
+
+Se o login for bem-sucedido, a API retorna os dados do paciente.
+
+Ponto Crítico: Os dados IdPaciente e Nome são salvos no UserDataService, que foi registrado como Singleton no MauiProgram.cs para que essa informação persista durante toda a sessão do app.
+
+A navegação Shell.Current.GoToAsync($"//{nameof(DashboardPage)}") leva à tela principal.
+
+Dashboard (DashboardPage -> DashboardViewModel):
+
+O nome do usuário é exibido, lido do UserDataService.
+
+O clique em "Agendar consulta" dispara o AgendarConsultaCommand.
+
+Navega para AgendarConsultaPage.
+
+Seleção de Especialidade (AgendarConsultaPage -> AgendarConsultaViewModel):
+
+PageAppearingCommand é disparado.
+
+Chama GamirApiService.GetEspecialidadesAsync().
+
+O serviço faz um GET para /api/agendamento/especialidades.
+
+Lógica de Backend: O endpoint agora consulta a AgendaWebView, usa DistinctBy(v => v.Nome) na memória para garantir que não haja especialidades repetidas e retorna a lista.
+
+O Picker na tela é preenchido.
+
+O usuário seleciona uma especialidade e clica em "Ver profissionais".
+
+VerProfissionaisCommand é disparado.
+
+Ponto Crítico: A navegação agora envia DOIS parâmetros: GoToAsync($"{nameof(MedicosDisponiveisPage)}?EspecialidadeNome={Nome}&IdProcedimento={IdProcedimento}").
+
+Seleção de Médico e Data (MedicosDisponiveisPage -> MedicosDisponiveisViewModel):
+
+O ViewModel recebe EspecialidadeNome e IdProcedimento via [QueryProperty].
+
+PageAppearingCommand chama GetMedicosAsync().
+
+O serviço faz um GET para /api/agendamento/medicos/{especialidade}. O backend filtra a AgendaWebView pelo nome da especialidade. O Picker de médicos é preenchido.
+
+O usuário seleciona um médico. OnMedicoSelecionadoChanged é disparado.
+
+O método CarregarDiasDisponiveis() é chamado. Ele cria um DiasDisponiveisRequest com o ID do médico, mês e ano, e faz um POST para /api/agendamento/dias-disponiveis.
+
+Lógica de Backend: O endpoint percorre cada dia do mês, consulta a AgendaWebView para ver se o médico trabalha naquele dia da semana e se a QuantidadeMaxima > 0. Ele também conta os agendamentos já existentes na Cad_Agenda para aquele dia e retorna uma lista de objetos com Dia e Status ("Disponivel", "PoucasVagas").
+
+O calendário na tela é "aceso" com as cores verde e amarelo.
+
+Seleção de Horário e Confirmação (Ainda em MedicosDisponiveisViewModel):
+
+O usuário clica num dia disponível. SelecionarDiaCommand é disparado.
+
+Ele cria um HorariosDisponiveisRequest (com ID do médico, a data e o IdProcedimento que recebemos) e faz um POST para /api/agendamento/horarios-disponiveis.
+
+Lógica de Backend (O Algoritmo): Este é o código mais inteligente do sistema. Ele:
+
+Busca as regras de horário (início, fim, almoço) e a duração da consulta (EscalaAgenda) da AgendaWebView.
+
+Busca todos os horários já ocupados na Cad_Agenda para aquele dia.
+
+Gera todos os "slots" de horário possíveis (um while que incrementa a hora de início pela duração da consulta).
+
+Para cada slot, verifica se ele se sobrepõe com algum horário já ocupado ou com o horário de almoço.
+
+Retorna uma lista de strings com os horários que sobraram (ex: "09:00", "09:30").
+
+O carrossel de horários aparece na tela.
+
+O usuário clica num horário. SelecionarHorarioCommand é disparado. A propriedade ShowAgendarButton vira true.
+
+O botão "Agendar Consulta" aparece com uma animação.
+
+O usuário clica em "Agendar Consulta". AgendarConsultaCommand é disparado.
+
+Lógica Final: O comando cria um AgendamentoRequestDto com todos os dados coletados: IdPaciente (do UserDataService), IdPrestadorMedico, DataHoraMarcada (combinando a data e a hora), e o IdProcedimento.
+
+O serviço faz um POST final para /api/agendamento. O backend cria uma nova linha na tabela Cad_Agenda e retorna 201 Created.
+
+Se o resultado for true, o app navega para a AgendamentoSucessoPage.
+
+Sucesso! (AgendamentoSucessoPage):
+
+A tela é exibida, mostrando o Image com a Source="success_checkmark.gif" e IsAnimationPlaying="True".
+
+O botão "Voltar para o Início" executa o comando VoltarCommand.
+
+A navegação Shell.Current.GoToAsync("//DashboardPage") reseta o fluxo, levando o usuário de volta à tela principal.
+
+III. HISTÓRICO DE GUERRA: BUGS CRÍTICOS ESMAGADOS
+O Bug do Fechamento Súbito:
+
+Sintoma: App fechava ao tentar navegar para a Dashboard após o login.
+
+Causa: A navegação //DashboardPage é uma navegação absoluta que exige que a rota esteja registrada na hierarquia principal do AppShell.xaml. Nossa DashboardPage estava apenas registrada como uma rota secundária.
+
+Solução: Transformamos a DashboardPage no ShellContent principal após o login, validando a rota absoluta.
+
+O Bug do idProcedimentoTussNomenclatura Nulo:
+
+Sintoma: Agendamento falhava no banco de dados com erro de FOREIGN KEY.
+
+Causa: Estávamos passando IdProcedimento = 1 fixo, mas a especialidade/médico selecionado podia não ter relação com o procedimento de ID 1 na tabela Tab_ProcedimentoTussNomenclatura.
+
+Solução: Passamos o IdProcedimento real desde a tela de especialidades até o ViewModel final, usando QueryProperty.
+
+O Bug do Mapeamento de Nomes de Coluna:
+
+Sintoma: Erro SQL Nome de coluna '...' inválido. (Ex: EscalaAgendaEspecialidade).
+
+Causa: A propriedade na nossa entidade C# (EscalaAgendaEspecialidade) não correspondia ao nome da coluna na view do banco (EscalaAgenda).
+
+Solução: Corrigimos o mapeamento na classe AgendaWebView.cs usando o atributo [Column("EscalaAgenda")] e renomeando a propriedade para public int? EscalaAgenda { get; set; }.
+
+O Bug do Valor Nulo ( SqlNullValueException ):
+
+Sintoma: API retornava erro 500 ao tentar ler dados do banco, especificamente em colunas de horário como SegundaHoraInicio.
+
+Causa: O banco de dados permitia valores NULL para os horários, mas nossas propriedades na entidade AgendaWebView.cs eram string, que não podem ser nulas por padrão no C# moderno.
+
+Solução: Alteramos todas as propriedades que poderiam ser nulas no banco para tipos anuláveis em C#: string? para os horários e int? para as quantidades.
+
+Esta documentação encapsula o estado atual e a jornada do projeto. A próxima etapa é a implementação da lógica real para os horários de almoço e outras regras de negócio complexas no algoritmo de horarios-disponiveis.

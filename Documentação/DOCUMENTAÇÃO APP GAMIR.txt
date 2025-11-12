@@ -1,0 +1,135 @@
+Documentação Mestra de Projeto: Aplicativo Gamir Saúde
+Versão: 2.0 (Technical Blueprint)
+Data: 04 de Outubro de 2025
+Autor: Gemini (Vortex)
+Projeto: Aplicativo Móvel para Pacientes da Clínica Gamir Saúde
+
+1. Visão Geral do Projeto
+Este documento detalha a arquitetura técnica e o escopo funcional completo do aplicativo móvel Gamir Saúde. O projeto visa criar um ecossistema digital integrado que centraliza a jornada de saúde do paciente, desde o primeiro contato e agendamento até o acesso a resultados de exames. A solução compreende um aplicativo móvel para pacientes e uma API de backend para orquestrar a lógica de negócio e a comunicação com o banco de dados existente da clínica.
+
+2. Arquitetura de Tecnologia
+A solução é construída sobre a plataforma .NET da Microsoft, garantindo uma base de código unificada e moderna em C# para o backend e o frontend.
+
+2.1. Visão Geral da Arquitetura
+O sistema segue uma arquitetura cliente-servidor de três camadas:
+
+[Aplicativo .NET MAUI (Cliente)] <--> [API RESTful ASP.NET Core (Backend)] <--> [Banco de Dados SQL Server (Dados)]
+
+2.2. Backend (Servidor)
+Linguagem/Framework: C# com ASP.NET Core 8. Escolhido pela performance, robustez e por ser o padrão da indústria para aplicações .NET.
+
+Arquitetura da API: RESTful. Define um padrão claro de comunicação sem estado (stateless) entre o cliente e o servidor via HTTP.
+
+Acesso a Dados: Entity Framework Core 8. Mapeia as tabelas do banco de dados para objetos C#, simplificando e segurand-o o acesso aos dados.
+
+Banco de Dados: SQL Server. O banco de dados existente da clínica, com o qual a API se comunicará.
+
+Padrões de Projeto:
+
+Repository Pattern: Abstrai a lógica de acesso aos dados, desacoplando a lógica de negócio do Entity Framework.
+
+DTOs (Data Transfer Objects): Objetos específicos para transferir dados entre o cliente e o servidor, garantindo que apenas as informações necessárias sejam expostas.
+
+Autenticação: JWT (JSON Web Tokens). Padrão moderno e seguro para autenticação em APIs, onde o cliente, após o login, envia um token em cada requisição para provar sua identidade.
+
+2.3. Frontend (Aplicativo Móvel)
+Framework: .NET MAUI (Multi-platform App UI). Escolhido pela capacidade de criar um aplicativo nativo para Android e iOS a partir de uma única base de código em C#. A sinergia com o backend em C# é uma vantagem estratégica.
+
+Linguagem: C# (para a lógica e inteligência) e XAML (para a declaração da interface visual).
+
+Padrão de Arquitetura: MVVM (Model-View-ViewModel). Padrão essencial para aplicações XAML, que separa a interface (View), a lógica de apresentação (ViewModel) e os dados (Model), resultando em um código mais limpo, testável e de fácil manutenção. As bibliotecas CommunityToolkit.Mvvm e CommunityToolkit.Maui serão utilizadas para acelerar a implementação deste padrão.
+
+2.4. Ambiente de Desenvolvimento
+IDE Principal: Visual Studio 2022 Community Edition. Ambiente de desenvolvimento integrado completo, ideal para projetos .NET, com ferramentas de depuração, gerenciamento de emuladores e templates.
+
+Controle de Versão: Git. Padrão mundial para controle de versão de código.
+
+3. Estrutura do Banco de Dados (Resumo)
+A API se conectará ao banco de dados SQL Server existente. As tabelas-chave para o funcionamento do app são:
+
+Cad_Paciente: Armazena os dados cadastrais dos usuários, incluindo credenciais de login (CPF, SenhaWeb) e pontos de fidelidade.
+
+Cad_Agenda: Tabela transacional que registra cada agendamento (consulta ou exame), ligando um idPaciente a um idPrestadorMedico em uma DataHoraMarcada.
+
+Cad_PrestadorMedico: Cadastro dos profissionais de saúde, com informações como nome e se atendem com agenda.
+
+Cad_PrestadorMedicoEspecialidade e Cad_PrestadorMedicoDia: Juntas, definem a disponibilidade da agenda, com a primeira definindo a regra semanal e a segunda, as exceções.
+
+Cad_PrestadorMedicoEspecialidadeProcedimento: Define a duração em minutos de cada procedimento, essencial para o cálculo dos horários.
+
+Cad_ANSCbos: Catálogo de especialidades.
+
+Cad_PacienteAnexo: Tabela que liga os laudos (armazenados como arquivos, provavelmente na nuvem AWS, conforme indicado pela coluna RespostaAWS) a um paciente e a um atendimento.
+
+4. Especificação da API RESTful (Endpoints)
+A seguir, a lista detalhada de todos os endpoints que o backend irá expor para o aplicativo .NET MAUI consumir.
+
+AuthController
+POST /api/auth/login: Autentica um usuário via CPF e senha. Retorna um Token JWT e dados do usuário.
+
+POST /api/auth/register: Cria um novo registro na Cad_Paciente.
+
+POST /api/auth/connect-account: Inicia o fluxo de verificação para pacientes antigos.
+
+POST /api/auth/verify-account: Valida o código e associa a conta do app ao idPaciente existente.
+
+PacienteController [Authorize]
+GET /api/paciente/profile: Retorna os dados do perfil do usuário logado, incluindo QtdePontosFidelidade.
+
+PUT /api/paciente/profile: Atualiza dados básicos do perfil (telefone, e-mail).
+
+AgendamentoController [Authorize]
+GET /api/agendamento/especialidades: Retorna uma lista de especialidades da Cad_ANSCbos.
+
+GET /api/agendamento/medicos/{idEspecialidade}: Retorna uma lista de médicos (Cad_PrestadorMedico) para uma especialidade.
+
+POST /api/agendamento/disponibilidade: Endpoint complexo que recebe idMedico, idProcedimento, Mês, Ano e retorna os dias e horários disponíveis, aplicando a lógica de agenda e exceções.
+
+GET /api/agendamento/meus-agendamentos: Retorna os agendamentos do usuário da Cad_Agenda, separados em "Pendentes" e "Fechados".
+
+POST /api/agendamento: Cria um novo registro na Cad_Agenda.
+
+PUT /api/agendamento/{idAgenda}/cancelar: Atualiza um agendamento, marcando-o como cancelado.
+
+LaudoController [Authorize]
+GET /api/laudos: Lista os laudos do paciente a partir da Cad_PacienteAnexo.
+
+GET /api/laudos/{idLaudo}/download: Retorna uma URL (baseada na RespostaAWS) para o download do arquivo PDF do laudo.
+
+5. Fluxo de Usuário e Telas (Frontend .NET MAUI)
+Esta seção amarra a experiência do usuário com a arquitetura técnica.
+
+Inicialização (MauiProgram.cs): O app será inicializado registrando as fontes, serviços (como um GamirApiService singleton que cuidará das chamadas HTTP) e as páginas/ViewModels para injeção de dependência.
+
+Tela de Login (LoginPage.xaml / LoginViewModel.cs):
+
+A UI será definida em XAML.
+
+O ViewModel em C# terá propriedades para Cpf, Senha e um ICommand para o botão de login.
+
+Ao executar o comando, o ViewModel chamará o GamirApiService, que por sua vez chamará o endpoint POST /api/auth/login.
+
+Dashboard (DashboardPage.xaml / DashboardViewModel.cs):
+
+Após o login, o app navegará para esta página.
+
+O ViewModel chamará GET /api/paciente/profile para obter os pontos de fidelidade e GET /api/agendamento/meus-agendamentos para popular as marcações no calendário.
+
+Agendamento (AgendamentoPage.xaml / AgendamentoViewModel.cs):
+
+Este será um fluxo multi-etapas gerenciado por um único ViewModel.
+
+O ViewModel chamará sequencialmente os endpoints de especialidades, medicos e disponibilidade para popular a UI em cada etapa.
+
+Ao final, chamará POST /api/agendamento para confirmar a marcação.
+
+Laudos (LaudosPage.xaml / LaudosViewModel.cs):
+
+O ViewModel chamará GET /api/laudos para obter a lista.
+
+Um CollectionView em XAML exibirá os resultados.
+
+O comando "Ver Laudo" chamará GET /api/laudos/{idLaudo}/download e usará a URL retornada para abrir o navegador ou um visualizador de PDF.
+
+6. Conclusão
+Este documento serve como um blueprint completo para o desenvolvimento do aplicativo Gamir Saúde. Ele estabelece uma base técnica sólida com C#, .NET MAUI e ASP.NET Core, e detalha como cada funcionalidade será implementada, conectando a interface do usuário às regras de negócio e à persistência de dados. O próximo passo é iniciar a implementação, começando pela estrutura do projeto da API e, em paralelo, a tela de login no aplicativo MAUI.

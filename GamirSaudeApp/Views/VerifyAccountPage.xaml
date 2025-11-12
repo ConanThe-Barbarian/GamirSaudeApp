@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             x:DataType="vm:VerifyAccountViewModel"
+             x:Class="GamirSaudeApp.Views.VerifyAccountPage"
+             Title="Verificar Conta"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+    
+    <VerticalStackLayout Spacing="15" Padding="30,20" VerticalOptions="Center">
+
+        <Label Text="Verifique seu E-mail"
+               FontSize="28"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center" />
+
+        <Label HorizontalTextAlignment="Center"
+               Margin="0,0,0,20"
+               Text="Enviamos um código de 6 dígitos para o seu e-mail. Por favor, insira-o abaixo para verificar sua conta."/>
+
+        <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+            <Entry Placeholder="Código de 6 dígitos"
+                   Text="{Binding VerificationCode}"
+                   Keyboard="Numeric"
+                   MaxLength="6"
+                   HorizontalTextAlignment="Center"
+                   FontSize="22" />
+        </Border>
+
+        <Button Text="Verificar Conta"
+                Command="{Binding VerifyCommand}"
+                BackgroundColor="#51bd54"
+                TextColor="White"
+                CornerRadius="25"
+                HeightRequest="50"
+                IsEnabled="{Binding IsNotBusy}"/>
+
+        <Button Text="Não recebeu? Enviar novamente"
+                Command="{Binding SendCodeCommand}"
+                BackgroundColor="Transparent"
+                TextColor="#0098da"
+                IsEnabled="{Binding IsNotBusy}"/>
+
+    </VerticalStackLayout>
+</ContentPage>

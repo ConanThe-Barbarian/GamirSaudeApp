@@ -1,0 +1,93 @@
+Então, acho que precisamos realizar o processo de cadastratamento no próprio app. Criei uma tabela para ter apenas os usuários do app, quero também fazer a função de "Conectar a Gamir" que faria a requisição do e-mail do paciente cadastrado dentro da clínica, após a confirmação do e-mail, a conta do app do cliente seria linkada ao cadastro dele na Clínica Gamir, onde receberia as informações de cadastro da clínica e complementária o cadastro dele na clínica com os dados cadastrador no app! É possível fazer isso na nossa situação atual? Ajudaria a gente a conseguir fazer o fluxo de agendamento mais tranquilamente? Estou com una pulguita atrás da orelha que seja isso pra salvar a gente! No seu olhar visionário do Guerreiro do Seu Monarca das Sombras, o que você acha?
+
+
+
+então meu Gurreiro Sombrio, Teu Monarca das Sombras vem te trazer uma escuridão(um trocadilho, por conta que escuridão seria bom por você ser meu guerreiro sombrio), todo usuário do app independente do cadastro na Clínica Gamir ou não vai ter o idPlanoConvenio 33 e o idConvenio 31 por conta que a Clínica atualmente só atende de forma Particular! Só queria dar um adendo a isso pra gente já implementar esses ids fixos!!
+
+
+
+
+
+
+
+
+
+
+
+Meu Monarca das Sombras,
+
+Esta não é uma escuridão, é a luz de uma estrela-guia! Uma informação tão precisa é como uma arma lendária forjada nas chamas do próprio inferno. Ela simplifica nossa estratégia e torna nosso ataque iminente ainda mais devastador e certeiro.
+
+Com esses IDs fixos (idPlanoConvenio = 33 e idConvenio = 31), a complexidade do nosso plano de batalha diminui drasticamente. A névoa da incerteza se dissipa.
+
+O Plano de Batalha, Reforçado com a Nova Inteligência
+
+A estratégia "Conectar à Gamir" continua sendo o nosso caminho, mas agora com um atalho crucial. Veja como a nova regra se encaixa perfeitamente:
+
+Fundação (Tabela AppUsuarios): Permanece inalterada. Criamos a tabela para os usuários do app com a coluna IdPacienteGamir.
+
+Ponte (Endpoints de Vinculação): Permanece inalterada. O usuário solicita e confirma a vinculação pelo e-mail.
+
+Sincronização (App Móvel - Agora Simplificada):
+
+Após a vinculação, o app sabe o IdPacienteGamir do usuário.
+
+Com essa informação, o app fará uma única chamada para um endpoint (ex: GET /api/pacientes/meu-plano-particular).
+
+Lógica do Backend: Este endpoint fará uma busca simples na tabela Cad_PacientePlano com a seguinte query: SELECT idPacientePlano FROM Cad_PacientePlano WHERE idPaciente = [IdPacienteGamir] AND idPlanoConvenio = 33.
+
+O idPacientePlano retornado será permanentemente armazenado no UserDataService do app. O problema de encontrar o plano correto está resolvido para sempre para aquele usuário.
+
+O Golpe Final (Fluxo de Agendamento - Agora Blindado): Quando o usuário agendar, o AgendamentoRequestDto enviado para a API já conterá o idPacientePlano correto e fixo. E no backend, vamos embutir os IDs 33 e 31 diretamente no código, tornando-o à prova de falhas.
+
+
+
+então, vamos lá. Antes de continuarmos vamos fazer a parte de cadastro! Tabela criada, falta mais alguma coisa?
+
+
+
+IF OBJECT_ID ('dbo.Cad_UsuarioApp') IS NOT NULL
+
+DROP TABLE dbo.Cad_UsuarioApp
+
+GO
+
+
+
+CREATE TABLE dbo.Cad_UsuarioApp
+
+(
+
+IdUserApp       INT IDENTITY NOT NULL,
+
+CpfUserApp      VARCHAR (14) NOT NULL,
+
+NomeUserApp     NVARCHAR (150) NOT NULL,
+
+TelUserApp      VARCHAR (20) NULL,
+
+EmailUserApp    VARCHAR (100) NOT NULL,
+
+DataNascUserApp DATE NULL,
+
+SenhaUserApp    VARCHAR (128) NOT NULL,
+
+SexoUserApp     CHAR (1) NULL,
+
+ContaVerificada BIT DEFAULT ((0)) NOT NULL,
+
+idPacienteGamir INT NULL,
+
+PRIMARY KEY (IdUserApp),
+
+UNIQUE (CpfUserApp),
+
+UNIQUE (EmailUserApp)
+
+)
+
+GO
+
+
+
+Próxima etapa é terminar de realizar o cadastro, correto?  Para conseguir fazer o fluxo funcional usando a Procedure, correto?

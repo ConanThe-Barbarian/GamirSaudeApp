@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             x:Class="GamirSaudeApp.Views.AgendarExamePage"
+             x:DataType="vm:AgendarExameViewModel"
+             Title="Agendar Exame"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <Grid RowDefinitions="Auto, *" BackgroundColor="#F0F2F5">
+
+        <Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 20,20,0,0" BackgroundColor="White" Margin="10,20,10,0" Padding="25">
+            <VerticalStackLayout Spacing="25" VerticalOptions="Start">
+                <Label Text="Escolha o tipo de exame"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       HorizontalTextAlignment="Center" />
+
+                <Border Stroke="#CCCCCC" StrokeThickness="1" StrokeShape="RoundRectangle 25" HeightRequest="55">
+                    <Picker ItemsSource="{Binding TiposDeExame}"
+                            SelectedItem="{Binding TipoExameSelecionado}"
+                            ItemDisplayBinding="{Binding Nome}"
+                            TextColor="Black"
+                            Margin="15,0"/>
+                </Border>
+
+                <Button Text="Ver exames disponíveis"
+                        Command="{Binding VerExamesEspecificosCommand}"
+                        BackgroundColor="#0098da"
+                        TextColor="White"
+                        CornerRadius="25"
+                        HeightRequest="55" />
+
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

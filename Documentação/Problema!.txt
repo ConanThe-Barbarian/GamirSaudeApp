@@ -1,0 +1,24 @@
+Perfeito. Agradeço por enviar todos os XMLs. Eles são exatamente o que precisávamos para entender a estrutura de dados e a causa raiz do problema.
+
+Após analisar os arquivos, a conclusão é clara: a última versão do código que sugeri, que tentava criar um registro de Tab_Atendimento e depois chamar a procedure [CAD_AGENDA_INSERT], falhou porque a procedure depende de um ecossistema de dados muito mais complexo do que o disponível no momento do agendamento inicial.
+
+A boa notícia é que com os dados dos XMLs, podemos construir a lógica correta diretamente no C#, sem depender da procedure. A solução é focar em inserir os dados essenciais nas tabelas corretas, garantindo que as relações-chave sejam satisfeitas.
+
+O Diagnóstico Final
+Tab_Atendimento (Tab_Atendimento.xml): Esta tabela é o "cabeçalho" de qualquer evento na clínica. Vimos que ela precisa de IDs válidos para idPacientePlano e idEspecialidadeExecutante. O erro ocorria porque esses valores não estavam sendo fornecidos corretamente pelo fluxo do aplicativo.
+
+Tab_AtendimentoServico (Tab_AtendimentoServicoTOP500k.xml): Esta tabela detalha o que de fato aconteceu no atendimento (qual procedimento ou consulta). A procedure [CAD_AGENDA_INSERT] falhava porque esperava que um registro aqui já existisse, o que não acontecia.
+
+
+
+Com base na análise da procedure [CAD_AGENDA_INSERT], as informações que estão faltando e causando a falha nos JOINs vêm das seguintes tabelas:
+
+Cad_PrestadorMedicoEspecialidade: Esta é a tabela mais crítica. Ela vincula o médico a uma ou mais especialidades. A procedure falha porque o idEspecialidadeExecutante que está sendo enviado na Tab_Atendimento é 0, e não existe um registro com esse ID nesta tabela.
+
+Cad_PacientePlano: Esta tabela associa o paciente ao seu plano de saúde específico. A procedure falha porque o idPacientePlano está sendo enviado como NULL na Tab_Atendimento, e a procedure precisa de um valor válido para fazer o JOIN.
+
+Tab_AtendimentoServico: Esta tabela detalha os serviços (procedimentos, exames, etc.) realizados em um atendimento. A procedure [CAD_AGENDA_INSERT] obrigatoriamente faz um JOIN com esta tabela para saber qual procedimento está sendo agendado. Como o nosso código C# estava criando apenas o registro na Tab_Atendimento, esta tabela ficava vazia para aquele idAtendimento, causando a falha.
+
+Cad_PlanoConvenioProcedimento: Esta tabela define as regras e a cobertura de cada procedimento para cada plano de saúde. A procedure usa a informação da Tab_AtendimentoServico para fazer um JOIN aqui e verificar as regras do convênio.
+
+Enviando os scripts SQL (CREATE TABLE ...) e o código XML com exemplos de dados para essas quatro tabelas, teremos uma visão completa para garantir que a lógica em C# preencha todos os campos necessários corretamente.

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="vm:ProfileViewModel"
+             x:Class="GamirSaudeApp.Views.ProfilePage"
+             Title="Meu Perfil"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <ScrollView BackgroundColor="#F0F2F5">
+        <VerticalStackLayout Spacing="10" Padding="20">
+
+            <Frame Padding="20" CornerRadius="10" Margin="0,10,0,0" BackgroundColor="White" BorderColor="Transparent">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Informações Pessoais" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
+
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Nome:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Nome}" VerticalOptions="Center"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="CPF:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Cpf}" VerticalOptions="Center"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="Nasc:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding DataNascimento}" VerticalOptions="Center"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Text="Sexo:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="3" Grid.Column="1" Text="{Binding Sexo}" VerticalOptions="Center"/>
+
+                        <Label Grid.Row="4" Grid.Column="0" Text="Telefone:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="4" Grid.Column="1" Text="{Binding Telefone}" VerticalOptions="Center"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame Padding="20" CornerRadius="10" BackgroundColor="White" BorderColor="Transparent">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Informações da Conta" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
+
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
+                        <Label Grid.Row="0" Grid.Column="0" Text="E-mail:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Email}" VerticalOptions="Center"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Status:" FontAttributes="Bold" VerticalOptions="Center"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding StatusConta}" VerticalOptions="Center">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Setter Property="TextColor" Value="Red"/>
+                                    <Style.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding ContaVerificada}" Value="True">
+                                            <Setter Property="TextColor" Value="Green"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </Grid>
+
+                    <Button Text="Verificar Conta Agora"
+                             IsVisible="{Binding ContaVerificada, Converter={StaticResource InverseBoolConverter}}"
+                             Command="{Binding VerificarContaCommand}" BackgroundColor="Orange" TextColor="White" CornerRadius="20" Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Button Text="Sair da Conta"
+                    Command="{Binding LogoutCommand}" BackgroundColor="Transparent"
+                    TextColor="Red"
+                    BorderColor="Red"
+                    BorderWidth="1"
+                    CornerRadius="10"
+                    HeightRequest="50"
+                    Margin="0,20,0,0"/>
+            <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#0098da" VerticalOptions="Center" HorizontalOptions="Center" Margin="0,20,0,0"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding AppearingCommand}"/>
+    </ContentPage.Behaviors>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" xmlns:converters="clr-namespace:GamirSaudeApp.Converters"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+</ContentPage>

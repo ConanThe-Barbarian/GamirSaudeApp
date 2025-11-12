@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             x:DataType="vm:DashboardViewModel"
+             x:Class="GamirSaudeApp.Views.DashboardPage"
+             Title="Início"
+             BackgroundColor="#F0F2F5"
+             Shell.NavBarIsVisible="True">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <VerticalStackLayout Spacing="15" Padding="20">
+
+        <Border Stroke="Orange" StrokeThickness="1" Padding="10" Margin="0,0,0,10"
+                IsVisible="{Binding ContaNaoVerificada}" BackgroundColor="#FFF8E1">
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Sua conta não está verificada!" FontAttributes="Bold" TextColor="Orange"/>
+                <Label Text="Acesse seu Perfil para verificar sua conta e ter acesso a todos os recursos." FontSize="12"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto, Auto">
+            <ImageButton Source="dotnet_bot.png"
+                         Command="{Binding GoToProfileCommand}"
+                         HeightRequest="30" WidthRequest="30" HorizontalOptions="Start" VerticalOptions="Center"
+                         BackgroundColor="Transparent" Grid.Row="0" Grid.Column="0" Margin="0,0,0,10"/>
+            <VerticalStackLayout Grid.Row="1" Grid.Column="0">
+                <Label Text="{Binding NomeUsuario}" FontSize="24" FontAttributes="Bold" />
+                <Label Text="Conta não verificada" TextColor="Red" FontSize="12" IsVisible="{Binding ContaNaoVerificada}"/>
+            </VerticalStackLayout>
+            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" VerticalOptions="Center" Spacing="5">
+                <Image Source="dotnet_bot.png" HeightRequest="20" />
+                <Label Text="{Binding PontosFidelidade}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <Button Text="Agendar consulta"
+                Command="{Binding AgendarConsultaCommand}"
+                BackgroundColor="#51bd54" TextColor="White"
+                CornerRadius="10" HeightRequest="50"
+                IsEnabled="{Binding ContaNaoVerificada, Converter={StaticResource InverseBoolConverter}}" />
+
+        <Button Text="Agendar Exame"
+                Command="{Binding AgendarExameCommand}"
+                BackgroundColor="#e3e9ff" TextColor="#0098da"
+                CornerRadius="10" HeightRequest="50"
+                IsEnabled="{Binding ContaNaoVerificada, Converter={StaticResource InverseBoolConverter}}" />
+        <Button Text="Meus Agendamentos"
+                Command="{Binding VerHistoricoCommand}"
+                BackgroundColor="White" TextColor="#0098da"
+                BorderColor="#0098da" BorderWidth="1"
+                CornerRadius="10" HeightRequest="50"
+                Margin="0,10,0,0"/>
+    </VerticalStackLayout>
+
+</ContentPage>

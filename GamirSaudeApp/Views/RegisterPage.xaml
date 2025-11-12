@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:behaviors="clr-namespace:GamirSaudeApp.Behaviors" x:DataType="vm:RegisterViewModel"
+             x:Class="GamirSaudeApp.Views.RegisterPage"
+             Title="Crie sua Conta"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="30,20">
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="Nome Completo" Text="{Binding Nome}" />
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="CPF" Text="{Binding Cpf}" Keyboard="Numeric">
+                    <Entry.Behaviors>
+                        <behaviors:CpfFormattingBehavior />
+                    </Entry.Behaviors>
+                </Entry>
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="E-mail" Text="{Binding Email}" Keyboard="Email" />
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <DatePicker Date="{Binding DataNascimento}" />
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Picker Title="Sexo" ItemsSource="{Binding SexoOptions}" SelectedItem="{Binding Sexo}" />
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="Telefone (Opcional)" Text="{Binding Telefone}" Keyboard="Telephone">
+                    <Entry.Behaviors>
+                        <behaviors:TelFormattingBehavior />
+                    </Entry.Behaviors>
+                </Entry>
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="Senha" Text="{Binding Senha}" IsPassword="True" />
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
+                <Entry Placeholder="Confirmar Senha" Text="{Binding ConfirmarSenha}" IsPassword="True" />
+            </Border>
+
+            <Button Text="Cadastrar"
+        Command="{Binding RegisterCommand}" BackgroundColor="#51bd54"
+        TextColor="White"
+        CornerRadius="25"
+        HeightRequest="50"
+        Margin="0,10,0,0"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

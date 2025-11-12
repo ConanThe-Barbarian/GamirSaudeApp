@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:models="clr-namespace:GamirSaudeApp.Models"
+             x:Class="GamirSaudeApp.Views.ExamesEspecificosPage"
+             x:Name="thisPage"
+             x:DataType="vm:ExamesEspecificosViewModel"
+             Title="{Binding TipoExameNome}"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <Grid RowDefinitions="Auto, *" BackgroundColor="#F0F2F5">
+        <Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 20,20,0,0" BackgroundColor="White" Margin="10,20,10,0" Padding="25">
+            <VerticalStackLayout Spacing="25" VerticalOptions="Start">
+                <Label Text="Escolha o exame desejado"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       HorizontalTextAlignment="Center" />
+
+                <ScrollView>
+                    <CollectionView ItemsSource="{Binding ExamesEspecificos}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Especialidade">
+                                <Button Text="{Binding Nome}"
+                                        Margin="0,5"
+                                        BackgroundColor="#e3e9ff"
+                                        TextColor="#0098da"
+                                        CornerRadius="10"
+                                        Command="{Binding BindingContext.VerProfissionaisDeExameCommand, Source={x:Reference thisPage}}"
+                                        CommandParameter="{Binding .}"/>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </ScrollView>
+
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

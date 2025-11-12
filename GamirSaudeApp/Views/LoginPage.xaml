@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:behaviors="clr-namespace:GamirSaudeApp.Behaviors"
+             x:DataType="vm:LoginViewModel"
+             x:Class="GamirSaudeApp.Views.LoginPage"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="30,20">
+            <Image Source="logo_gamir_saude.png"
+                   HeightRequest="80"
+                   Margin="0,20,0,40"
+                   HorizontalOptions="Center" />
+
+            <Label Text="Bem-vindo"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Text="Insira seus dados para acessar sua conta."
+                   HorizontalTextAlignment="Center"
+                   Margin="0,0,0,20"/>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle 25">
+                <Entry Placeholder="CPF"
+                       Text="{Binding Cpf}"
+                       Keyboard="Numeric"
+                       MaxLength="14"
+                       Margin="5,5,5,5">
+                    <Entry.Behaviors>
+                        <behaviors:CpfFormattingBehavior />
+                    </Entry.Behaviors>
+                </Entry>
+            </Border>
+
+            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle 25">
+                <Entry Placeholder="Senha"
+                       Text="{Binding Senha}"
+                       IsPassword="True" />
+            </Border>
+
+            <Button Text="Login"
+                    Command="{Binding LoginCommand}"
+                    BackgroundColor="#0098da"
+                    TextColor="White"
+                    CornerRadius="25"
+                    HeightRequest="50"
+                    Margin="0,10,0,0"/>
+
+            <Button Text="Cadastre-se"
+                    Command="{Binding GoToRegisterCommand}"
+                    BackgroundColor="#e0eaff"
+                    TextColor="#5067eb"
+                    CornerRadius="25"
+                    HeightRequest="50" />
+
+            <Label Text="Esqueceu sua senha?"
+                   TextColor="#0098da"
+                   HorizontalOptions="Center"
+                   Margin="0,10,0,0">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ForgotPasswordCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

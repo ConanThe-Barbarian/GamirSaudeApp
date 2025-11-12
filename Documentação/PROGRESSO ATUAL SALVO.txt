@@ -1,0 +1,109 @@
+Documentação de Transferência de Projeto: Aplicativo Gamir Saúde
+Versão: 2.0
+Data: 06 de Outubro de 2025
+Autor: Vortex (Mentor de Desenvolvimento Full-Stack)
+
+
+Propósito: Este documento é um snapshot completo do projeto "Gamir Saúde". Ele detalha a arquitetura, todo o código-fonte relevante, o histórico de decisões e o estado atual para permitir uma continuação de desenvolvimento sem perda de contexto. 
+
+
+1. Papel do Mentor (Vortex) e Acordo de Colaboração
+Minha função como Mentor de Desenvolvimento Full-Stack é guiar a construção deste aplicativo passo a passo.  Nossa colaboração se baseia em:
+
+
+Guia Passo a Passo: Quebrar o projeto em etapas gerenciáveis. 
+
+
+Explicação Total: Detalhar o "quê", o "porquê" e o "onde" de cada trecho de código. 
+
+
+Código Completo: Fornecer código pronto para uso, não pseudocódigo. 
+
+
+Ritmo Controlado: Avançar apenas após a confirmação de entendimento do desenvolvedor. 
+
+2. Arquitetura e Filosofia do Projeto
+O projeto é dividido em um backend (API) e um frontend (App Móvel). 
+
+Backend (API RESTful):
+
+
+Tecnologias: C#, .NET 8, ASP.NET Core 8, Entity Framework Core 8. 
+
+
+Arquitetura: Clean Architecture, garantindo que o núcleo do sistema (Domain) não dependa de detalhes externos. As camadas são Domain (entidades), Infrastructure (acesso a dados com EF Core), Application (lógica de negócio e DTOs) e API (endpoints). 
+
+
+
+
+Padrões: Repository Pattern e Injeção de Dependência (DI) são usados extensivamente. 
+
+Frontend (Aplicativo Móvel):
+
+
+Tecnologia: .NET MAUI com C# e XAML. 
+
+
+Arquitetura: MVVM (Model-View-ViewModel), acelerado pela biblioteca CommunityToolkit.Mvvm.
+
+
+Estrutura: O código é organizado nas pastas Views, ViewModels, Models e Services para refletir o padrão MVVM. 
+
+3. Código-Fonte e Alterações Recentes
+3.1. Backend (API)
+Projeto GamirSaude.Domain:
+
+Entities/PrestadorMedicoEspecialidade.cs: Nova entidade criada para representar a tabela de ligação Cad_PrestadorMedicoEspecialidade, permitindo a consulta de médicos por especialidade.
+
+Entities/PrestadorMedico.cs: Atualizada com o atributo [Column("PrestadorMedico")] na propriedade Nome para corrigir um erro de mapeamento com o banco de dados.
+
+Projeto GamirSaude.Infrastructure:
+
+Persistence/GamirSaudeDbContext.cs: Adicionado o DbSet<PrestadorMedicoEspecialidade> para que o Entity Framework possa gerenciar a nova entidade.
+
+Projeto GamirSaude.API:
+
+Controllers/AgendamentoController.cs: O método GetMedicosPorEspecialidade foi significativamente atualizado. A lógica de consulta foi corrigida para usar um JOIN entre as tabelas PrestadoresMedicosEspecialidades e PrestadoresMedicos, filtrando pelo idEspecialidade recebido. Isso substituiu a lógica de placeholder anterior.
+
+3.2. Frontend (App Móvel)
+Projeto GamirSaudeApp:
+
+Models/Medico.cs: Novo modelo criado para deserializar os dados dos médicos retornados pela API.
+
+Services/GamirApiService.cs: Adicionado o novo método GetMedicosAsync(int idEspecialidade) para chamar o endpoint recém-criado na API (/api/agendamento/medicos/{idEspecialidade}).
+
+ViewModels/MedicosDisponiveisViewModel.cs: Este novo ViewModel foi criado. Ele utiliza o atributo [QueryProperty] para receber o EspecialidadeId da página anterior. Possui a lógica em seu método InitializeAsync para chamar o GamirApiService, buscar a lista de médicos e preenchê-la em uma ObservableCollection.
+
+Views/MedicosDisponiveisPage.xaml: Esta nova página foi criada com o layout para a seleção de médicos, data e horário, conforme o design fornecido. Ela contém um Picker (dropdown) ligado à ObservableCollection de médicos do ViewModel.
+
+Views/MedicosDisponiveisPage.xaml.cs: O code-behind da página foi implementado para chamar o método InitializeAsync do ViewModel no evento OnAppearing, garantindo que os dados sejam carregados quando a tela aparece.
+
+MauiProgram.cs e AppShell.xaml.cs: Ambos foram atualizados para registrar a nova View (MedicosDisponiveisPage) e o ViewModel (MedicosDisponiveisViewModel), permitindo a injeção de dependência e a navegação por rota.
+
+4. Histórico de Depuração e Decisões Chave (Atualizado)
+Continuamos a resolver problemas de forma iterativa:
+
+Erros de FOREIGN KEY no SQL: Ocorreu um erro ao tentar popular a tabela Cad_PrestadorMedicoEspecialidade. O problema foi diagnosticado como uma divergência entre os IDs de exemplo no script e os IDs reais existentes na tabela Cad_PrestadorMedico. A solução foi instruir a utilização de um SELECT para obter os IDs corretos antes de executar os INSERTs.
+
+Mapeamento de Colunas no EF Core: Encontramos um erro de "Nome de coluna inválido" ao buscar médicos. Assim como antes, o problema era uma divergência entre o nome da propriedade na entidade C# (Nome) e o nome da coluna no banco de dados (PrestadorMedico). Corrigimos isso aplicando o atributo [Column("PrestadorMedico")] na entidade PrestadorMedico.cs. 
+
+Persistência de Erros de Compilação ("Código Fantasma"): O problema de o Visual Studio executar versões antigas do código, mesmo após as correções, persistiu. A solução definitiva foi a limpeza manual e profunda, fechando o VS e apagando as pastas bin e obj de todos os projetos para forçar uma recompilação completa do zero. 
+
+5. Estado Atual e Próximo Passo Imediato
+Estado Atual: Conseguimos! Após uma longa jornada de depuração, o fluxo de agendamento está funcional. O usuário consegue fazer login, navegar para a Dashboard, clicar em "Agendar Consulta", ser levado para a tela de especialidades, e a lista de especialidades é carregada com sucesso da API e exibida no Picker. O próximo passo, que já iniciamos, é a tela de seleção de médicos.
+
+Última Ação: Executamos com sucesso o script SQL para popular a tabela Cad_PrestadorMedicoEspecialidade com os IDs corretos. A API agora deve ser capaz de retornar médicos para uma dada especialidade.
+
+Próximo Passo Imediato: Testar o fluxo completo de navegação para a tela "Médicos Disponíveis".
+
+Executar a solução (API + App).
+
+Fazer o login.
+
+Ir para "Agendar Consulta".
+
+Selecionar uma especialidade no dropdown.
+
+Clicar no botão "Ver profissionais disponíveis".
+
+Verificar se a navegação para a tela "Médicos Disponíveis" ocorre e se o dropdown de médicos é preenchido com os dados corretos retornados pela API.

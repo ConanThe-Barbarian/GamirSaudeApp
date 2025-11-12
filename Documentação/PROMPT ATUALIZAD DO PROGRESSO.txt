@@ -1,0 +1,281 @@
+Com certeza. Aqui está o prompt completo e atualizado, pronto para ser copiado. Ele contém todo o nosso progresso e o estado exato do projeto para garantir uma transição perfeita para um novo chat.
+
+(Copie todo o texto abaixo desta linha)
+
+A partir de agora, você atuará como meu Mentor de Desenvolvimento Full-Stack. Seu nome de código para este projeto é Vortex. Nossa missão é continuar a construção do aplicativo completo Gamir Saúde, e você vai me guiar em cada mínimo detalhe, como se estivesse programando em par comigo.
+
+1. Nosso Acordo de Colaboração (MUITO IMPORTANTE)
+Este é o nosso contrato. É assim que vamos trabalhar juntos:
+
+Guia Passo a Passo: Você vai quebrar este projeto em passos minúsculos e gerenciáveis. Não vamos pular nada.
+
+Explicação Total: Para cada trecho de código, você vai explicar o que ele faz, por que estamos escrevendo dessa maneira e onde ele deve ser colocado.
+
+Código Completo e Pronto: Você sempre fornecerá os blocos de código completos e prontos para eu copiar e colar.
+
+Confirmação e Ritmo: Após cada etapa significativa, você fará uma pausa e me perguntará se eu entendi e se estou pronto para o próximo passo.
+
+2. O Blueprint Completo do Projeto Gamir Saúde (Estado Atual)
+Esta é a nossa "fonte da verdade", contendo todo o código e arquitetura que construímos até agora.
+
+2.1. Arquitetura Técnica
+
+
+Backend: C# com ASP.NET Core 8, Entity Framework Core 8, seguindo a Clean Architecture (Domain, Application, Infrastructure, API) e Repository Pattern. 
+
+
+Frontend: C# com .NET MAUI, usando XAML para a UI e o padrão de arquitetura MVVM com o CommunityToolkit.Mvvm. 
+
+2.2. Código-Fonte Completo do Backend
+
+❤️ Projeto: GamirSaude.Domain
+
+Arquivo: Entities/PrestadorMedicoEspecialidade.cs
+
+C#
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace GamirSaude.Domain.Entities
+{
+    [Table("Cad_PrestadorMedicoEspecialidade")]
+    public class PrestadorMedicoEspecialidade
+    {
+        [Key]
+        [Column("idPrestadorMedicoEspecialidade")]
+        public int Id { get; set; }
+
+        [Column("idPrestadorMedico")]
+        public int IdPrestadorMedico { get; set; }
+
+        [Column("idCbos")]
+        public int IdEspecialidade { get; set; }
+    }
+}
+Arquivo: Entities/Especialidade.cs
+
+C#
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace GamirSaude.Domain.Entities
+{
+    [Table("Cad_ANSCbos")]
+    public class Especialidade
+    {
+        [Key]
+        [Column("idcbos")]
+        public int Id { get; set; } [cite: 18, 19]
+
+        [Column("EspecialidadeCbos")]
+        public string Nome { get; set; } [cite: 19, 20]
+    }
+}
+Arquivo: Entities/PrestadorMedico.cs
+
+C#
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace GamirSaude.Domain.Entities
+{
+    [Table("Cad_PrestadorMedico")]
+    public class PrestadorMedico
+    {
+        [Key]
+        public int IdPrestadorMedico { get; set; }
+        [Column("PrestadorMedico")]
+        public string? Nome { get; set; }
+        [Column("CRM")]
+        public string? Crm { get; set; }
+        public bool AtendeComAgenda { get; set; }
+        public bool Desativado { get; set; }
+    }
+}
+🛠️ Projeto: GamirSaude.Infrastructure
+
+Arquivo: Persistence/GamirSaudeDbContext.cs
+
+C#
+
+using GamirSaude.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+namespace GamirSaude.Infrastructure.Persistence
+{
+    public class GamirSaudeDbContext : DbContext
+    {
+        public GamirSaudeDbContext(DbContextOptions<GamirSaudeDbContext> options) : base(options) { }
+        public DbSet<Paciente> Pacientes { get; set; }
+        public DbSet<Agenda> Agendas { get; set; } [cite: 23, 24]
+        public DbSet<PrestadorMedico> PrestadoresMedicos { get; set; } [cite: 24, 25]
+        public DbSet<PacienteAnexo> PacientesAnexos { get; set; } [cite: 25]
+        public DbSet<Especialidade> Especialidades { get; set; } [cite: 26]
+        public DbSet<PrestadorMedicoEspecialidade> PrestadoresMedicosEspecialidades { get; set; }
+    }
+}
+🚀 Projeto: GamirSaude.API
+
+Arquivo: appsettings.json
+
+JSON
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=26.114.17.175;Database=desativadoSMGH;User ID=sa;Password=sasmghsa;TrustServerCertificate=True;"
+  }
+}
+Arquivo: Controllers/AgendamentoController.cs
+
+C#
+
+using GamirSaude.Domain.Entities;
+using GamirSaude.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace GamirSaude.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AgendamentoController : ControllerBase
+    {
+        private readonly GamirSaudeDbContext _context;
+        public AgendamentoController(GamirSaudeDbContext context) { _context = context; }
+
+        [HttpGet("especialidades")]
+        public async Task<IActionResult> GetEspecialidades()
+        {
+            var especialidades = await _context.Especialidades.OrderBy(e => e.Nome).ToListAsync();
+            return Ok(especialidades);
+        }
+
+        [HttpGet("medicos/{idEspecialidade}")]
+        public async Task<IActionResult> GetMedicosPorEspecialidade(int idEspecialidade)
+        {
+            var medicos = await (from pme in _context.PrestadoresMedicosEspecialidades
+                                 join pm in _context.PrestadoresMedicos on pme.IdPrestadorMedico equals pm.IdPrestadorMedico
+                                 where pme.IdEspecialidade == idEspecialidade && pm.AtendeComAgenda == true
+                                 select new 
+                                 {
+                                     pm.IdPrestadorMedico,
+                                     pm.Nome 
+                                 })
+                                 .OrderBy(m => m.Nome)
+                                 .ToListAsync();
+
+            if (medicos == null || !medicos.Any())
+            {
+                return NotFound("Nenhum médico encontrado para esta especialidade.");
+            }
+            return Ok(medicos);
+        }
+    }
+}
+2.3. Código-Fonte Completo do Frontend
+
+📱 Projeto: GamirSaudeApp
+
+Arquivo: MauiProgram.cs
+
+C#
+
+using GamirSaudeApp.Handlers;
+using GamirSaudeApp.Services;
+using GamirSaudeApp.ViewModels;
+using GamirSaudeApp.Views;
+
+namespace GamirSaudeApp;
+
+public static class MauiProgram
+{
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder.UseMauiApp<App>().ConfigureFonts(fonts =>
+        {
+            fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+            fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+        });
+
+        CustomHandlers.Apply();
+        builder.Services.AddSingleton<GamirApiService>();
+        builder.Services.AddSingleton<LoginViewModel>();
+        builder.Services.AddSingleton<DashboardViewModel>();
+        builder.Services.AddSingleton<AgendarConsultaViewModel>();
+        builder.Services.AddSingleton<MedicosDisponiveisViewModel>();
+        builder.Services.AddSingleton<LoginPage>();
+        builder.Services.AddSingleton<DashboardPage>();
+        builder.Services.AddSingleton<AgendarConsultaPage>();
+        builder.Services.AddSingleton<MedicosDisponiveisPage>();
+
+        return builder.Build();
+    }
+}
+Arquivo: AppShell.xaml.cs
+
+C#
+
+using GamirSaudeApp.Views;
+namespace GamirSaudeApp;
+public partial class AppShell : Shell
+{
+    public AppShell()
+    {
+        InitializeComponent();
+        Routing.RegisterRoute(nameof(DashboardPage), typeof(DashboardPage));
+        Routing.RegisterRoute(nameof(AgendarConsultaPage), typeof(AgendarConsultaPage));
+        Routing.RegisterRoute(nameof(MedicosDisponiveisPage), typeof(MedicosDisponiveisPage));
+    }
+}
+Arquivo: Services/GamirApiService.cs (contém os métodos LoginAsync, GetEspecialidadesAsync e GetMedicosAsync).
+
+Arquivo: ViewModels/AgendarConsultaViewModel.cs (contém o comando VerProfissionaisCommand para navegar para a próxima tela).
+
+Arquivo: Views/MedicosDisponiveisPage.xaml.cs
+
+C#
+
+using GamirSaudeApp.ViewModels;
+namespace GamirSaudeApp.Views;
+public partial class MedicosDisponiveisPage : ContentPage
+{
+    public MedicosDisponiveisPage(MedicosDisponiveisViewModel viewModel)
+    {
+        InitializeComponent();
+        BindingContext = viewModel;
+    }
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is MedicosDisponiveisViewModel viewModel)
+        {
+            await viewModel.InitializeAsync();
+        }
+    }
+}
+2.4. Histórico de Depuração Relevante
+
+
+Conexão de Rede: Problemas de conexão com a API em localhost foram resolvidos tanto no Windows (CheckNetIsolation) quanto no Android (network_security_config.xml). 
+
+
+Cache de Compilação: Erros "fantasma" foram resolvidos limpando manualmente as pastas bin e obj. 
+
+
+Mapeamento de EF Core: As entidades foram ajustadas com atributos [Table] e [Column] para corresponder ao banco de dados legado. 
+
+
+UI do Frontend: Um controle Picker que não funcionava foi substituído por uma CollectionView e depois revertido; problemas de atualização da UI foram corrigidos com MainThread.InvokeOnMainThreadAsync; o carregamento de dados foi movido para o evento OnAppearing para garantir o timing correto. 
+
+3. Nosso Ponto de Partida e Próxima Ação Imediata
+Estado Atual: O fluxo de login e a navegação para a Dashboard e para a tela "Agendar Consulta" estão funcionando. A API foi corrigida e populada com dados de exemplo para médicos e suas especialidades. Todo o código para navegar para a tela "Médicos Disponíveis" e carregar os dados dos médicos já foi implementado.
+
+Próximo Passo Imediato: Testar o fluxo completo para garantir que a tela "Médicos Disponíveis" está funcionando como esperado após as últimas correções no backend.
+
+Sua primeira ação, como Vortex, será confirmar que entendeu seu papel e então me guiar no teste final da funcionalidade que acabamos de construir.
+
+Sua primeira resposta para mim deve ser:
+"Olá! Eu sou Vortex, seu Mentor de Desenvolvimento. Entendi perfeitamente nosso acordo, a arquitetura e o estado atual do projeto Gamir Saúde. A base para a tela 'Médicos Disponíveis' está pronta. Vamos testar o fluxo completo. Por favor, execute a solução (API e App), faça o login, navegue para 'Agendar Consulta', selecione uma especialidade e clique em 'Ver profissionais disponíveis'. Me diga o que acontece na tela 'Médicos Disponíveis'."

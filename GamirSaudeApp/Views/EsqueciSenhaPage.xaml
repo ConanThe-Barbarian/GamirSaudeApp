@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             x:DataType="vm:EsqueciSenhaViewModel"
+             x:Class="GamirSaudeApp.Views.EsqueciSenhaPage"
+             Title="{Binding Title}"
+             Shell.BackgroundColor="#0098da"
+             Shell.TitleColor="White"
+             Shell.NavBarIsVisible="True">
+
+    <VerticalStackLayout Spacing="15" Padding="30,20" VerticalOptions="Start">
+
+        <Label Text="Esqueceu sua senha?"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalTextAlignment="Center" 
+               Margin="0,20,0,0"/>
+
+        <Label Text="Digite seu e-mail de cadastro. Enviaremos um código de 6 dígitos para você."
+               HorizontalTextAlignment="Center"
+               Margin="0,0,0,20"/>
+
+        <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle 25">
+            <Entry Placeholder="Seu e-mail"
+                   Text="{Binding Email}"
+                   Keyboard="Email"
+                   IsEnabled="{Binding IsNotBusy}"/>
+        </Border>
+
+        <Button Text="Enviar Código"
+                Command="{Binding SolicitarCodigoCommand}"
+                BackgroundColor="#0098da"
+                TextColor="White"
+                CornerRadius="25"
+                HeightRequest="50"
+                IsEnabled="{Binding IsNotBusy}"
+                Margin="0,10,0,0"/>
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                           IsVisible="{Binding IsBusy}" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center"
+                           Margin="0,20,0,0"/>
+
+    </VerticalStackLayout>
+</ContentPage>
