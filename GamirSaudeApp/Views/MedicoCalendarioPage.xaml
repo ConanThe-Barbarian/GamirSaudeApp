@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:models="clr-namespace:GamirSaudeApp.Models"
+             xmlns:converters="clr-namespace:GamirSaudeApp.Converters"
+             x:Class="GamirSaudeApp.Views.MedicoCalendarioPage"
+             x:DataType="viewmodels:MedicoCalendarioViewModel"
+             Title="Calendário"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToThicknessConverter x:Key="BoolToThicknessConverter" TrueValue="2" FalseValue="0" />
+            <converters:CountToBoolConverter x:Key="CountToBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *" BackgroundColor="White">
+
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="Selecionar Horário" TextColor="White" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20" Spacing="15">
+
+                <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#D6E4FF" Padding="15">
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="{Binding MedicoNome}" 
+                               TextColor="Black" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               HorizontalOptions="Center"/>
+
+                        <Label Text="{Binding ValorConsulta, StringFormat='Valor: {0}'}" 
+                               TextColor="#666666" 
+                               FontSize="14" 
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="White" Padding="10">
+                    <Border.Shadow>
+                        <Shadow Brush="Gray" Offset="2,2" Radius="5" Opacity="0.2"/>
+                    </Border.Shadow>
+
+                    <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,5">
+                            <Button Text="&lt;" Grid.Column="0" Command="{Binding ChangeMonthCommand}" CommandParameter="-1" BackgroundColor="Transparent" TextColor="#0098DA" FontAttributes="Bold"/>
+                            <Label Text="{Binding MesCorrente, StringFormat='{0:MMMM yyyy}'}" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" FontSize="18" FontAttributes="Bold" TextColor="Black" TextTransform="Lowercase"/>
+                            <Button Text="&gt;" Grid.Column="2" Command="{Binding ChangeMonthCommand}" CommandParameter="1" BackgroundColor="Transparent" TextColor="#0098DA" FontAttributes="Bold"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*,*,*,*,*,*" ColumnSpacing="2">
+                            <Border Grid.Column="0" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="SE" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="1" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="TE" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="2" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="QU" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="3" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="QU" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="4" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="SE" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="5" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="SA" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="6" BackgroundColor="#8CC63F" StrokeShape="RoundRectangle 5" HeightRequest="25">
+                                <Label Text="DO" TextColor="White" FontSize="10" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Border>
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding DiasDoMes}" SelectionMode="None" HeightRequest="240">
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="5" HorizontalItemSpacing="5"/>
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:CalendarDay">
+                                    <Border StrokeShape="RoundRectangle 5" Padding="0" HeightRequest="40" WidthRequest="40" StrokeThickness="{Binding IsSelected, Converter={StaticResource BoolToThicknessConverter}}" Stroke="DarkBlue">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MedicoCalendarioViewModel}}, Path=SelecionarDiaCommand}" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Grid>
+                                            <Label Text="{Binding DayNumber}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Small" TextColor="Gray"/>
+                                        </Grid>
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Disponivel">
+                                                <Setter Property="BackgroundColor" Value="#8CC63F" />
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="PoucasVagas">
+                                                <Setter Property="BackgroundColor" Value="#FFC107" />
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Indisponivel">
+                                                <Setter Property="BackgroundColor" Value="White" />
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsEmpty}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="Transparent" />
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                                <Setter Property="StrokeThickness" Value="0"/>
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Disponivel">
+                                                <Setter Property="Content">
+                                                    <Setter.Value>
+                                                        <Label Text="{Binding DayNumber}" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout IsVisible="{Binding HorariosDisponiveis.Count, Converter={StaticResource CountToBoolConverter}}">
+                    <Label Text="Horários Disponíveis" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,10"/>
+
+                    <CollectionView ItemsSource="{Binding HorariosDisponiveis}" 
+                                     SelectionMode="Single" 
+                                     SelectedItem="{Binding HorarioSelecionado, Mode=TwoWay}" 
+                                     HeightRequest="60">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10"/>
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:HorarioModel">
+                                <Grid HeightRequest="45" WidthRequest="80">
+
+                                    <Border StrokeShape="RoundRectangle 10" 
+                                            StrokeThickness="0" 
+                                            BackgroundColor="#8CC63F">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="#558B2F" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                    </Border>
+
+                                    <Label Text="{Binding Hora}" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" 
+                                           TextColor="White" 
+                                           FontSize="14" 
+                                           FontAttributes="Bold"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+                <Button Text="Agendar Consulta"
+                        Command="{Binding AgendarConsultaCommand}"
+                        IsVisible="{Binding ShowAgendarButton}"
+                        BackgroundColor="#8CC63F"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="25"
+                        HeightRequest="55"
+                        Margin="0,10,0,20"/>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="#0098DA" HorizontalOptions="Center"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <Image Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding HomeCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ChatCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ProfileCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CalendarCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

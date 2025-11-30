@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             x:Class="GamirSaudeApp.Views.VerLaudoPage"
+             x:DataType="viewmodels:VerLaudoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#E5E7EB">
+    <Grid RowDefinitions="Auto, *">
+
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="Detalhes do Laudo" TextColor="White" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="25">
+
+            <Border StrokeShape="RoundRectangle 15" 
+                    StrokeThickness="0" 
+                    BackgroundColor="White" 
+                    VerticalOptions="Center" 
+                    Padding="25">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.1"/>
+                </Border.Shadow>
+
+                <VerticalStackLayout Spacing="15">
+
+                    <Label Text="{Binding NomeExame}" 
+                           TextColor="Black" 
+                           FontSize="22" 
+                           FontAttributes="None" />
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Nome do Médico" TextColor="Black" FontSize="14"/>
+                        <Label Text="{Binding NomeMedico}" TextColor="#555555" FontSize="14"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Especialidade" TextColor="Black" FontSize="16" FontAttributes="Bold"/>
+                        <Label Text="{Binding Especialidade}" TextColor="#555555" FontSize="14"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Data da consulta" TextColor="Black" FontSize="14"/>
+                        <Label Text="{Binding DataExame}" TextColor="#555555" FontSize="14"/>
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="20" Color="Transparent"/>
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+
+                        <Button Grid.Column="0"
+                                Text="Baixar PDF"
+                                Command="{Binding BaixarPdfCommand}"
+                                BackgroundColor="#0098DA"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="13"
+                                CornerRadius="8"
+                                HeightRequest="45">
+                            <Button.ImageSource>
+                                <FontImageSource Glyph="⬇" Color="White" Size="16"/>
+                            </Button.ImageSource>
+                        </Button>
+
+                        <Button Grid.Column="1"
+                                Text="Compartilhar"
+                                Command="{Binding CompartilharCommand}"
+                                BackgroundColor="#0098DA"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="13"
+                                CornerRadius="8"
+                                HeightRequest="45">
+                            <Button.ImageSource>
+                                <FontImageSource Glyph="🔗" Color="White" Size="16"/>
+                            </Button.ImageSource>
+                        </Button>
+
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

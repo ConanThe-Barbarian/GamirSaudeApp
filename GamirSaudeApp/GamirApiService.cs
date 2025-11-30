@@ -1,45 +1,21 @@
 ﻿using GamirSaudeApp.Models;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace GamirSaudeApp.Services
 {
     public class GamirApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
 
         public GamirApiService()
         {
             _httpClient = new HttpClient();
+
             string baseAddress; // Usar variável local
-          //  baseAddress = "h-ttps://paradingly-unindictable-chandler.ngrok-free.dev";
 
-           //--- INÍCIO DA CORREÇÃO: ENDEREÇO PARA EMULADOR ANDROID ---
-
-            #if ANDROID        
-
-                baseAddress = "http://10.0.2.2:5293";
-
-           #elif IOS
-           
-                     baseAddress = "http://localhost:5293";
-           #elif MACCATALYST
-
-           
-                    baseAddress = "http://localhost:5293";
-           #elif WINDOWS
-
-                    baseAddress = "http://localhost:5293";
-           #else
-            
-                     baseAddress = "http://localhost:5293";
-           #endif
-
-            // --- FIM DA CORREÇÃO ---
+            baseAddress = "http://localhost:5293";
 
             // Define o BaseAddress somente se a string foi definida corretamente
             if (!string.IsNullOrEmpty(baseAddress))
@@ -62,29 +38,28 @@ namespace GamirSaudeApp.Services
             }
         }
 
+        
+
+        // ==================================================================
+        // 1. AUTENTICAÇÃO E PERFIL
+        // ==================================================================
+
         public async Task<LoginAppResponse> LoginAsync(string cpf, string senha)
         {
-            var request = new LoginRequest { Cpf = cpf, Senha = senha };
             try
             {
+                var request = new LoginRequest { Cpf = cpf, Senha = senha };
                 var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // A resposta da API é lida como o novo modelo LoginAppResponse
                     return await response.Content.ReadFromJsonAsync<LoginAppResponse>();
                 }
-                else
-                {
-                    // Tenta ler a mensagem de erro da API em caso de falha (Ex: 401 Unauthorized)
-                    var errorResponse = await response.Content.ReadFromJsonAsync<LoginAppResponse>();
-                    return errorResponse; // Retorna a resposta com a mensagem de erro
-                }
+                return null;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro no login: {ex.Message}");
-                // Retorna nulo apenas em caso de falha de comunicação total
+                Debug.WriteLine($"[API] Erro no Login: {ex.Message}");
                 return null;
             }
         }
@@ -95,21 +70,51 @@ namespace GamirSaudeApp.Services
             {
                 var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request);
                 if (response.IsSuccessStatusCode)
-                {
                     return (true, "Cadastro realizado com sucesso!");
-                }
-                else
-                {
-                    var errorResponse = await response.Content.ReadFromJsonAsync<LoginAppResponse>(); // Reutilizamos para a Message
-                    return (false, errorResponse?.Message ?? "Não foi possível completar o cadastro.");
-                }
+
+                var error = await response.Content.ReadAsStringAsync();
+                return (false, error ?? "Erro no cadastro.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro no registro: {ex.Message}");
-                return (false, "Ocorreu um erro de comunicação. Tente novamente.");
+                return (false, $"Erro de comunicação: {ex.Message}");
             }
         }
+
+        // Verificação de Conta (SMS)
+        public async Task<bool> SolicitarVerificacaoAsync(string cpf, string celular)
+        {
+            try
+            {
+                var dados = new { Cpf = cpf, Celular = celular };
+                var response = await _httpClient.PostAsJsonAsync("/api/auth/request-verification", dados);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[API] Erro solicitar verificação: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> ConfirmarVerificacaoAsync(string cpf, string codigo)
+        {
+            try
+            {
+                var dados = new { Cpf = cpf, Codigo = codigo };
+                var response = await _httpClient.PostAsJsonAsync("/api/auth/confirm-verification", dados);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[API] Erro confirmar verificação: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ==================================================================
+        // 2. FLUXO DE CONSULTAS
+        // ==================================================================
 
         public async Task<IEnumerable<Especialidade>> GetEspecialidadesAsync()
         {
@@ -119,7 +124,7 @@ namespace GamirSaudeApp.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao buscar especialidades: {ex.Message}");
+                Debug.WriteLine($"[API] Erro especialidades: {ex.Message}");
                 return Enumerable.Empty<Especialidade>();
             }
         }
@@ -128,330 +133,185 @@ namespace GamirSaudeApp.Services
         {
             try
             {
-                var url = $"/api/agendamento/medicos/{especialidade}";
-                return await _httpClient.GetFromJsonAsync<IEnumerable<Medico>>(url);
+                return await _httpClient.GetFromJsonAsync<IEnumerable<Medico>>($"/api/agendamento/medicos/{especialidade}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao buscar médicos: {ex.Message}");
+                Debug.WriteLine($"[API] Erro médicos: {ex.Message}");
                 return Enumerable.Empty<Medico>();
             }
         }
 
         public async Task<IEnumerable<DiaDisponivel>> GetDiasDisponiveisAsync(int idMedico, int mes, int ano)
         {
-            // Usa o Model de consulta (SEM IdProcedimento)
-            var request = new DiasDisponiveisConsultaRequestDto { IdMedico = idMedico, Mes = mes, Ano = ano };
             try
             {
-                // Chama o endpoint de consulta /dias-disponiveis
+                var request = new { IdMedico = idMedico, Mes = mes, Ano = ano };
                 var response = await _httpClient.PostAsJsonAsync("/api/agendamento/dias-disponiveis", request);
+
                 if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<DiaDisponivel>>() ?? Enumerable.Empty<DiaDisponivel>();
-                }
-                else
-                {
-                    // Log de erro para diagnóstico
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"Erro API GetDiasDisponiveisAsync (Consulta): Status={response.StatusCode}, Content='{errorContent}'");
-                }
+                    return await response.Content.ReadFromJsonAsync<IEnumerable<DiaDisponivel>>();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Exceção ao buscar dias (Consulta): {ex.Message}");
+                Debug.WriteLine($"[API] Erro dias consulta: {ex.Message}");
             }
             return Enumerable.Empty<DiaDisponivel>();
         }
+
         public async Task<IEnumerable<string>> GetHorariosDisponiveisAsync(HorariosDisponiveisRequest request)
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("/api/agendamento/horarios-disponiveis", request);
                 if (response.IsSuccessStatusCode)
-                {
                     return await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
-                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao buscar horários: {ex.Message}");
+                Debug.WriteLine($"[API] Erro horários: {ex.Message}");
             }
             return Enumerable.Empty<string>();
         }
+
+        // ==================================================================
+        // 3. FLUXO DE EXAMES
+        // ==================================================================
+
+        public async Task<IEnumerable<TipoExame>> GetTiposExameAsync()
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<IEnumerable<TipoExame>>("/api/agendamento/exames/tipos");
+            }
+            catch { return Enumerable.Empty<TipoExame>(); }
+        }
+
+        public async Task<IEnumerable<Especialidade>> GetExamesEspecificosAsync(string tipoExame)
+        {
+            try
+            {
+                var request = new { TipoExame = tipoExame };
+                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/especificos", request);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<IEnumerable<Especialidade>>();
+            }
+            catch { }
+            return Enumerable.Empty<Especialidade>();
+        }
+
+        public async Task<IEnumerable<Medico>> GetMedicosPorProcedimentoAsync(int idProcedimento)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<IEnumerable<Medico>>($"/api/agendamento/exames/medicos/{idProcedimento}");
+            }
+            catch { return Enumerable.Empty<Medico>(); }
+        }
+
+        public async Task<IEnumerable<DiaDisponivel>> GetDiasDisponiveisExameAsync(DiasDisponiveisRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/dias-disponiveis", request);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<IEnumerable<DiaDisponivel>>();
+            }
+            catch { }
+            return Enumerable.Empty<DiaDisponivel>();
+        }
+
+        public async Task<IEnumerable<string>> GetHorariosDisponiveisExameAsync(HorariosDisponiveisRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/horarios-disponiveis", request);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
+            }
+            catch { }
+            return Enumerable.Empty<string>();
+        }
+
+        // ==================================================================
+        // 4. AGENDAMENTO FINAL (Compartilhado)
+        // ==================================================================
 
         public async Task<bool> AgendarConsultaAsync(AgendamentoRequest request)
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("/api/agendamento", request);
-
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    return true;
-                }
-                else
-                {
-                    // --- MUDANÇA AQUI: Ler e logar o erro do servidor ---
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"ERRO DA API (STATUS: {response.StatusCode}): {errorContent}");
-                    // Se for um erro 500, lançamos uma exceção clara
-                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
-                    {
-                        throw new Exception($"Erro interno da API. Detalhes: {errorContent}");
-                    }
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[API] Erro Agendar: {error}");
                     return false;
                 }
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao agendar consulta: {ex.Message}");
+                Debug.WriteLine($"[API] Exceção Agendar: {ex.Message}");
                 return false;
             }
         }
 
-        // -----------------------------------------------------------
-        // NOVOS MÉTODOS DE SERVIÇO (FLUXO DE EXAME)
-        // -----------------------------------------------------------
+        // ==================================================================
+        // 5. HISTÓRICO E OUTROS
+        // ==================================================================
 
-        // MÉTODO 1 (v5.3.1): Obter Tipos de Exame (JÁ EXISTE, AGORA CORRETO)
-        public async Task<IEnumerable<TipoExame>> GetTiposExameAsync()
-        {
-            try
-            {
-                // Aponta para o novo endpoint
-                return await _httpClient.GetFromJsonAsync<IEnumerable<TipoExame>>("/api/agendamento/exames/tipos");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar tipos de exame: {ex.Message}");
-                return Enumerable.Empty<TipoExame>();
-            }
-        }
-
-        // MÉTODO 2 (v5.3.1): Obter Exames Específicos (JÁ EXISTE, AGORA CORRETO)
-        public async Task<IEnumerable<Especialidade>> GetExamesEspecificosAsync(string tipoExame)
-        {
-            try
-            {
-                // Usa POST para enviar o nome do tipo
-                var request = new { TipoExame = tipoExame };
-                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/especificos", request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    // Retorna como "Especialidade" para reutilizar o modelo
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<Especialidade>>();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar exames específicos: {ex.Message}");
-            }
-            return Enumerable.Empty<Especialidade>();
-        }
-
-        // NOVO MÉTODO 3: Obter Médicos por PROCEDIMENTO
-        public async Task<IEnumerable<Medico>> GetMedicosPorProcedimentoAsync(int idProcedimento)
-        {
-            try
-            {
-                var url = $"/api/agendamento/exames/medicos/{idProcedimento}";
-                return await _httpClient.GetFromJsonAsync<IEnumerable<Medico>>(url);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar médicos por procedimento: {ex.Message}");
-                return Enumerable.Empty<Medico>();
-            }
-        }
-
-        // NOVO MÉTODO 4: Obter Dias Disponíveis de EXAME
-        public async Task<IEnumerable<DiaDisponivel>> GetDiasDisponiveisExameAsync(DiasDisponiveisRequest request)
-        {
-            try
-            {
-                // Chama o novo endpoint de dias de exame
-                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/dias-disponiveis", request);
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<DiaDisponivel>>();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar dias de exame: {ex.Message}");
-            }
-            return Enumerable.Empty<DiaDisponivel>();
-        }
-
-        // NOVO MÉTODO 5: Obter Horários Disponíveis de EXAME
-        public async Task<IEnumerable<string>> GetHorariosDisponiveisExameAsync(HorariosDisponiveisRequest request)
-        {
-            try
-            {
-                // Chama o novo endpoint de horários de exame
-                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/exames/horarios-disponiveis", request);
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar horários de exame: {ex.Message}");
-            }
-            return Enumerable.Empty<string>();
-        }
-    
-        public async Task<(bool Success, string Message)> SendVerificationCodeAsync(string email)
-        {
-            try
-            {
-                var request = new { Email = email };
-                var response = await _httpClient.PostAsJsonAsync("/api/auth/send-verification-code", request);
-                var responseContent = await response.Content.ReadFromJsonAsync<LoginAppResponse>(); // Reutilizamos para a Message
-
-                if (response.IsSuccessStatusCode)
-                {
-                    // Para testes, podemos extrair a mensagem de sucesso junto com o código
-                    // Em produção, a mensagem seria apenas "Código enviado..."
-                    var message = $"{responseContent?.Message} Código de teste: {responseContent?.Usuario?.ToString() ?? "N/A"}";
-                    return (true, responseContent?.Message ?? "Código enviado com sucesso.");
-                }
-                return (false, responseContent?.Message ?? "Não foi possível enviar o código.");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao enviar código: {ex.Message}");
-                return (false, "Erro de comunicação.");
-            }
-        }
-
-        // MÉTODO VerifyAccountAsync ATUALIZADO
-        public async Task<(bool Success, string Message, UsuarioInfo UpdatedUser)> VerifyAccountAsync(string email, string codigo)
-        {
-            try
-            {
-                var request = new { Email = email, Codigo = codigo };
-                var response = await _httpClient.PostAsJsonAsync("/api/auth/verify-account", request);
-
-                // Desserializa a resposta completa
-                var responseContent = await response.Content.ReadFromJsonAsync<VerifyAccountResponse>();
-
-                if (response.IsSuccessStatusCode && responseContent?.Usuario != null)
-                {
-                    // Retorna sucesso, mensagem E os dados do usuário atualizado
-                    return (true, responseContent.Message ?? "Conta verificada!", responseContent.Usuario);
-                }
-                // Retorna falha, mensagem de erro e null para o usuário
-                return (false, responseContent?.Message ?? "Não foi possível verificar a conta.", null);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao verificar conta: {ex.Message}");
-                return (false, "Erro de comunicação.", null);
-            }
-        }
         public async Task<IEnumerable<AgendamentoHistorico>> GetHistoricoAgendamentosAsync(int idPaciente)
         {
             try
             {
-                var url = $"/api/agendamento/historico/{idPaciente}";
-                return await _httpClient.GetFromJsonAsync<IEnumerable<AgendamentoHistorico>>(url);
+                return await _httpClient.GetFromJsonAsync<IEnumerable<AgendamentoHistorico>>($"/api/agendamento/historico/{idPaciente}");
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro ao buscar histórico: {ex.Message}");
-                return Enumerable.Empty<AgendamentoHistorico>();
-            }
+            catch { return Enumerable.Empty<AgendamentoHistorico>(); }
         }
 
-        // --- NOVO MÉTODO PARA CANCELAR AGENDAMENTO ---
-        public async Task<(bool Success, string Message)> CancelarAgendamentoAsync(int idAgenda, int idUserApp)
+        public async Task<IEnumerable<LaudoModel>> GetMeusLaudosAsync(int idPaciente)
         {
             try
             {
-                var request = new { IdAgenda = idAgenda, IdUsuarioCancelamento = idUserApp };
-                var response = await _httpClient.PostAsJsonAsync("/api/agendamento/cancelar", request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return (true, "Agendamento cancelado com sucesso.");
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"ERRO DA API NO CANCELAMENTO: {errorContent}");
-                    return (false, "Falha ao cancelar agendamento.");
-                }
+                // Endpoint simulado para laudos
+                return await _httpClient.GetFromJsonAsync<IEnumerable<LaudoModel>>($"/api/laudos/{idPaciente}");
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro de comunicação no cancelamento: {ex.Message}");
-                return (false, "Ocorreu um erro de comunicação.");
-            }
-        }
-
-        // --- NOVO MÉTODO PARA BUSCAR PERFIL DO USUÁRIO ---
-        public async Task<UserProfile> GetUserProfileAsync(int idUserApp)
-        {
-            if (idUserApp <= 0) return null; // Validação básica
-
-            try
-            {
-                var url = $"/api/auth/profile/{idUserApp}";
-                // A API retorna UserProfileDto, mas desserializamos diretamente para o nosso modelo UserProfile
-                var profile = await _httpClient.GetFromJsonAsync<UserProfile>(url);
-                System.Diagnostics.Debug.WriteLine($"Perfil carregado para IdUserApp {idUserApp}: {profile?.NomeUsuario}"); // Log
-                return profile;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro ao buscar perfil do usuário: {ex.Message}");
-                return null; // Retorna nulo em caso de falha
-            }
+            catch { return Enumerable.Empty<LaudoModel>(); }
         }
 
         // -----------------------------------------------------------
-        // MÉTODOS DE RECUPERAÇÃO DE SENHA (ATUALIZADOS)
+        // MÉTODOS DE RECUPERAÇÃO DE SENHA
         // -----------------------------------------------------------
 
-        /// <summary>
-        /// Chama a API para solicitar um código de redefinição de senha.
-        /// </summary>
         public async Task<(bool Success, string Message)> EsqueciSenhaAsync(string email)
         {
             try
             {
+                // Nota: Certifique-se que 'EsqueciSenhaRequest' está em AuthModels.cs
                 var request = new EsqueciSenhaRequest { Email = email };
                 var response = await _httpClient.PostAsJsonAsync("/api/auth/esqueci-senha", request);
 
-                // Lê o conteúdo da resposta, seja sucesso (200) ou erro (404)
+                // Tenta ler a resposta padrão
                 var responseContent = await response.Content.ReadFromJsonAsync<SimpleAuthResponse>();
 
-                // --- ALTERAÇÃO AQUI ---
                 if (response.IsSuccessStatusCode)
                 {
-                    // Sucesso (200 OK)
-                    return (true, responseContent?.Message ?? "Solicitação processada.");
+                    return (true, responseContent?.Message ?? "Código enviado com sucesso!");
                 }
                 else
                 {
-                    // Erro (404 Not Found ou outro)
                     return (false, responseContent?.Message ?? "E-mail não encontrado.");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Erro ao solicitar código de redefinição: {ex.Message}");
-                return (false, "Não foi possível conectar ao servidor.");
+                Debug.WriteLine($"Erro ao solicitar código: {ex.Message}");
+                return (false, "Erro de comunicação com o servidor.");
             }
         }
 
-        /// <summary>
-        /// Chama a API para redefinir a senha usando o código.
-        /// </summary>
         public async Task<(bool Success, string Message)> RedefinirSenhaAsync(string email, string codigo, string novaSenha)
         {
             try
@@ -472,16 +332,45 @@ namespace GamirSaudeApp.Services
                 }
                 else
                 {
-                    return (false, responseContent?.Message ?? "Código inválido or expirado.");
+                    return (false, responseContent?.Message ?? "Código inválido ou erro ao redefinir.");
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Erro ao redefinir senha: {ex.Message}");
-                return (false, "Não foi possível conectar ao servidor.");
+                return (false, "Erro de comunicação com o servidor.");
+            }
+        }
+
+        // --- MÉTODOS DE PERFIL ---
+
+        // Busca os dados (Já existia, mas confirmando)
+        public async Task<UserProfile> GetUserProfileAsync(int idUserApp)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<UserProfile>($"/api/auth/profile/{idUserApp}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao buscar perfil: {ex.Message}");
+                return null;
+            }
+        }
+
+        // Atualiza os dados (NOVO)
+        public async Task<bool> UpdateProfileAsync(UpdateProfileRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync("/api/auth/profile", request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao atualizar perfil: {ex.Message}");
+                return false;
             }
         }
     }
 }
-
-    

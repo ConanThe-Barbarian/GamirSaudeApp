@@ -1,63 +1,71 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
-             xmlns:behaviors="clr-namespace:GamirSaudeApp.Behaviors" x:DataType="vm:RegisterViewModel"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
              x:Class="GamirSaudeApp.Views.RegisterPage"
-             Title="Crie sua Conta"
-             Shell.BackgroundColor="#0098da"
-             Shell.TitleColor="White"
-             Shell.NavBarIsVisible="True">
+             x:DataType="viewmodels:RegisterViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
 
     <ScrollView>
-        <VerticalStackLayout Spacing="15" Padding="30,20">
+        <VerticalStackLayout Padding="25" Spacing="15">
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="Nome Completo" Text="{Binding Nome}" />
+            <Grid ColumnDefinitions="Auto, *" Margin="0,10,0,20">
+                <ImageButton Grid.Column="0"
+                             HeightRequest="20" WidthRequest="20"
+                             HorizontalOptions="Start" VerticalOptions="Center"
+                             Command="{Binding VoltarParaLoginCommand}">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="#0098DA" Size="25"/>
+                    </ImageButton.Source>
+                </ImageButton>
+
+                <Label Grid.Column="1" Text="Cadastro" TextColor="#0098DA" FontSize="22" FontAttributes="Bold"
+                       HorizontalOptions="Center" VerticalOptions="Center" Margin="-20,0,0,0"/>
+            </Grid>
+
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding Nome}" Placeholder="nome completo" PlaceholderColor="#8EA6CC" TextColor="#0098DA" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="CPF" Text="{Binding Cpf}" Keyboard="Numeric">
-                    <Entry.Behaviors>
-                        <behaviors:CpfFormattingBehavior />
-                    </Entry.Behaviors>
-                </Entry>
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding Cpf}" Placeholder="cpf" PlaceholderColor="#8EA6CC" TextColor="#0098DA" Keyboard="Numeric" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="E-mail" Text="{Binding Email}" Keyboard="Email" />
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding Email}" Placeholder="Email" PlaceholderColor="#8EA6CC" TextColor="#0098DA" Keyboard="Email" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <DatePicker Date="{Binding DataNascimento}" />
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding Celular}" Placeholder="celular" PlaceholderColor="#8EA6CC" TextColor="#0098DA" Keyboard="Telephone" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Picker Title="Sexo" ItemsSource="{Binding SexoOptions}" SelectedItem="{Binding Sexo}" />
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Picker Title="sexo" TitleColor="#8EA6CC" TextColor="#0098DA"
+                        ItemsSource="{Binding ListaSexos}" SelectedItem="{Binding SexoSelecionado}" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="Telefone (Opcional)" Text="{Binding Telefone}" Keyboard="Telephone">
-                    <Entry.Behaviors>
-                        <behaviors:TelFormattingBehavior />
-                    </Entry.Behaviors>
-                </Entry>
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <DatePicker Date="{Binding DataNascimento}" TextColor="#0098DA" Format="dd/MM/yyyy" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="Senha" Text="{Binding Senha}" IsPassword="True" />
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding Senha}" Placeholder="senha" PlaceholderColor="#8EA6CC" TextColor="#0098DA" IsPassword="True" VerticalOptions="Center"/>
             </Border>
 
-            <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle(25)">
-                <Entry Placeholder="Confirmar Senha" Text="{Binding ConfirmarSenha}" IsPassword="True" />
+            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#EFF4FF" HeightRequest="50" Padding="15,0">
+                <Entry Text="{Binding ConfirmarSenha}" Placeholder="confirmar senha" PlaceholderColor="#8EA6CC" TextColor="#0098DA" IsPassword="True" VerticalOptions="Center"/>
             </Border>
 
-            <Button Text="Cadastrar"
-        Command="{Binding RegisterCommand}" BackgroundColor="#51bd54"
-        TextColor="White"
-        CornerRadius="25"
-        HeightRequest="50"
-        Margin="0,10,0,0"/>
+            <BoxView HeightRequest="10" Color="Transparent"/>
+
+            <Button Text="Cadastrar" Command="{Binding CadastrarCommand}" BackgroundColor="#0098DA" TextColor="White" FontAttributes="Bold" CornerRadius="25" HeightRequest="50" IsEnabled="{Binding IsNotBusy}"/>
+
+            <Label Text="Ja possui uma conta no App Gamir?" TextColor="#666666" FontSize="12" HorizontalOptions="Center" Margin="0,5,0,0"/>
+
+            <Button Text="Login" Command="{Binding VoltarParaLoginCommand}" BackgroundColor="#D6E4FF" TextColor="#0098DA" FontAttributes="Bold" CornerRadius="25" HeightRequest="50" IsEnabled="{Binding IsNotBusy}"/>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="#0098DA" HorizontalOptions="Center"/>
 
         </VerticalStackLayout>
     </ScrollView>

@@ -10,52 +10,50 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace GamirSaudeApp.ViewModels
 {
     public partial class AgendarExameViewModel : BaseViewModel
     {
-        private readonly GamirApiService _gamirApiService;
+        // Mock dos Grupos de Exame
+        public ObservableCollection<string> GruposExame { get; } = new ObservableCollection<string>
+        {
+            "RAIO X",
+            "ULTRASSONOGRAFIA",
+            "ECO/DOPPLER",
+            "TOMOGRAFIA",
+            "RESSONÂNCIA MAGNÉTICA"
+        };
 
         [ObservableProperty]
-        private ObservableCollection<TipoExame> _tiposDeExame;
-
-        [ObservableProperty]
-        private TipoExame _tipoExameSelecionado;
-
-        public AgendarExameViewModel(GamirApiService gamirApiService)
-        {
-            _gamirApiService = gamirApiService;
-            TiposDeExame = new ObservableCollection<TipoExame>();
-        }
+        private string grupoSelecionado;
 
         [RelayCommand]
-        private async Task PageAppearing()
-        {
-            if (TiposDeExame.Any()) return; // Não carrega se já tiver dados
+        private async Task Voltar() => await Shell.Current.GoToAsync("..");
 
-            var lista = await _gamirApiService.GetTiposExameAsync();
-            if (lista != null)
-            {
-                foreach (var item in lista)
-                {
-                    TiposDeExame.Add(item);
-                }
-            }
-        }
-
-        // Comando para o botão "Ver Exames" que vamos criar na tela
         [RelayCommand]
-        private async Task VerExamesEspecificos()
+        private async Task VerExamesDisponiveis()
         {
-            if (TipoExameSelecionado == null)
+            if (string.IsNullOrEmpty(GrupoSelecionado))
             {
-                await Shell.Current.DisplayAlert("Atenção", "Por favor, selecione um tipo de exame.", "OK");
+                await Shell.Current.DisplayAlert("Atenção", "Selecione um tipo de exame.", "OK");
                 return;
             }
 
-            // Ação final: Navega para a próxima tela, passando o nome do tipo de exame como parâmetro
-            await Shell.Current.GoToAsync($"{nameof(ExamesEspecificosPage)}?TipoExameNome={TipoExameSelecionado.Nome}");
+            // Navega para a lista detalhada, passando o nome do grupo
+            await Shell.Current.GoToAsync($"{nameof(ExamesEspecificosPage)}?TipoExameNome={GrupoSelecionado}");
         }
+
+        // --- BARRA INFERIOR ---
+        [RelayCommand]
+        private async Task Home() => await Shell.Current.GoToAsync("//DashboardPage");
+
+        [RelayCommand]
+        private async Task Chat() { /* ... */ }
+
+        [RelayCommand]
+        private async Task Profile() => await Shell.Current.GoToAsync(nameof(ProfilePage));
+
+        [RelayCommand]
+        private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
     }
 }

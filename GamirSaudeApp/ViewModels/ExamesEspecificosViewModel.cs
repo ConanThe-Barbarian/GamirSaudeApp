@@ -12,67 +12,65 @@ namespace GamirSaudeApp.ViewModels
     [QueryProperty(nameof(TipoExameNome), "TipoExameNome")]
     public partial class ExamesEspecificosViewModel : BaseViewModel
     {
-        private readonly GamirApiService _gamirApiService;
-
         [ObservableProperty]
         private string tipoExameNome;
 
-        [ObservableProperty]
-        private ObservableCollection<Especialidade> examesEspecificos; // Reutilizando o modelo 'Especialidade'
+        public ObservableCollection<TipoExame> ExamesEspecificos { get; } = new();
 
-        [ObservableProperty]
-        private Especialidade exameSelecionado;
-
-        [ObservableProperty]
-        private string title;
-
-        private int idProcedimentoSelecionado;
-
-        public ExamesEspecificosViewModel(GamirApiService gamirApiService)
+        // Chamado automaticamente quando a propriedade TipoExameNome muda (ao navegar)
+        partial void OnTipoExameNomeChanged(string value)
         {
-            _gamirApiService = gamirApiService;
-            ExamesEspecificos = new ObservableCollection<Especialidade>();
-            Title = "Selecione o Exame";
+            CarregarExamesMock(value);
         }
 
-        [RelayCommand]
-        private async Task PageAppearing()
+        private void CarregarExamesMock(string tipo)
         {
-            if (ExamesEspecificos.Count > 0 || string.IsNullOrEmpty(TipoExameNome)) return;
+            ExamesEspecificos.Clear();
 
-            var lista = await _gamirApiService.GetExamesEspecificosAsync(TipoExameNome);
-            if (lista != null)
+            // Simula dados diferentes dependendo do tipo
+            if (tipo == "RAIO X")
             {
-                foreach (var item in lista)
-                {
-                    ExamesEspecificos.Add(item);
-                }
+                ExamesEspecificos.Add(new TipoExame { Nome = "RX ANTEBRAÇO", PrazoResultado = "2 dias úteis", Valor = 150.00m });
+                ExamesEspecificos.Add(new TipoExame { Nome = "RX TÓRAX", PrazoResultado = "1 dia útil", Valor = 120.00m });
+                ExamesEspecificos.Add(new TipoExame { Nome = "RX COTOVELO", PrazoResultado = "2 dias úteis", Valor = 150.00m });
             }
-        }
-
-        partial void OnExameSelecionadoChanged(Especialidade value)
-        {
-            if (value != null)
+            else if (tipo == "ECO/DOPPLER")
             {
-                idProcedimentoSelecionado = value.IdProcedimento;
+                ExamesEspecificos.Add(new TipoExame { Nome = "ECOCARDIOGRAMA", PrazoResultado = "Na hora", Valor = 350.00m });
+                ExamesEspecificos.Add(new TipoExame { Nome = "DOPPLER DE CARÓTIDAS", PrazoResultado = "Na hora", Valor = 400.00m });
+            }
+            else
+            {
+                // Genérico
+                ExamesEspecificos.Add(new TipoExame { Nome = $"EXAME DE {tipo} 1", PrazoResultado = "3 dias úteis", Valor = 200.00m });
+                ExamesEspecificos.Add(new TipoExame { Nome = $"EXAME DE {tipo} 2", PrazoResultado = "5 dias úteis", Valor = 500.00m });
             }
         }
 
         [RelayCommand]
-        private async Task VerProfissionaisDeExame(Especialidade exame) // <-- 1. Aceita o parâmetro
+        private async Task Voltar() => await Shell.Current.GoToAsync("..");
+
+        [RelayCommand]
+        private async Task SelecionarExame(TipoExame exame)
         {
-            if (exame == null) // <-- 2. Verifica o parâmetro recebido
-            {
-                await Shell.Current.DisplayAlert("Atenção", "Por favor, selecione um exame.", "OK");
-                return;
-            }
-
-            // 3. Define as propriedades com base no parâmetro
-            ExameSelecionado = exame;
-            idProcedimentoSelecionado = exame.IdProcedimento;
-
-            // NAVEGA PARA A NOVA PÁGINA DE MÉDICOS DE EXAME
-            await Shell.Current.GoToAsync($"{nameof(MedicosExamePage)}?ExameNome={exame.Nome}&IdProcedimento={exame.IdProcedimento}");
+            // Agora navega para a LISTA, passando também o valor
+            await Shell.Current.GoToAsync($"{nameof(MedicosExameListaPage)}?ExameNome={exame.Nome}&IdProcedimento={exame.Id}&Valor={exame.ValorFormatado}");
         }
+        // 3. COMANDOS DA BARRA INFERIOR
+        [RelayCommand]
+        private async Task Home()
+        {
+            await Shell.Current.GoToAsync("//DashboardPage");
+        }
+
+        [RelayCommand]
+        private async Task Chat() { /* Lógica futura */ }
+
+        [RelayCommand]
+        private async Task Profile() { /* Lógica futura */ }
+
+        [RelayCommand]
+        private async Task Calendar() { /* Lógica futura */ }
     }
+
 }

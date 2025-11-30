@@ -1,35 +1,55 @@
-using GamirSaude.Domain.Interfaces;
-using GamirSaude.Infrastructure.Services;// <-- NOVA LINHA
 using GamirSaude.Infrastructure.Persistence;
-using GamirSaude.Infrastructure.Repositories;               // <-- NOVA LINHA
+using GamirSaude.Infrastructure.Services;
+using GamirSaude.Application.Services; // <--- ONDE ESTÃO AS INTERFACES
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer; // <--- AGORA VAI FUNCIONAR
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+// Se IEmailService estiver em Domain.Interfaces, descomente:
+// using GamirSaude.Domain.Interfaces; 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----- INÍCIO DO NOSSO CÓDIGO -----
-
-// 1. Ler a string de conexão do appsettings.json
+// 1. BANCO DE DADOS
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// 2. Registrar o DbContext no sistema de injeção de dependência
 builder.Services.AddDbContext<GamirSaudeDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. Registrar o nosso repositório
-builder.Services.AddScoped<IPacienteRepository, PacienteRepository>(); // <-- NOVA LINHA
+// 2. INJEÇÃO DE DEPENDÊNCIA
+// Garante que o C# sabe onde estão as classes e interfaces
+builder.Services.AddScoped<ITokenService, TokenService>();
 
-// ----- FIM DO NOSSO CÓDIGO -----
-builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Add services to the container.
+// 3. AUTENTICAÇÃO JWT
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"]
+    };
+});
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -38,6 +58,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             x:Class="GamirSaudeApp.Views.MedicosListaPage"
+             x:DataType="viewmodels:MedicosListaViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F5F5F5">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="{Binding EspecialidadeNome}" TextColor="White" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding MedicosEncontrados}" Margin="20">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewmodels:MedicoCard">
+                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,15" Padding="20">
+                        <Border.Shadow>
+                            <Shadow Brush="Gray" Offset="2,2" Radius="5" Opacity="0.1"/>
+                        </Border.Shadow>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MedicosListaViewModel}}, Path=SelecionarMedicoCommand}" CommandParameter="{Binding .}"/>
+                        </Border.GestureRecognizers>
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="{Binding Nome}" TextColor="#0098DA" FontSize="16" FontAttributes="Bold"/>
+
+                            <BoxView HeightRequest="1" Color="#F0F0F0"/>
+
+                            <Grid ColumnDefinitions="*, Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="Descrição:" TextColor="#999999" FontSize="12"/>
+                                    <Label Text="{Binding Descricao}" TextColor="#666666" FontSize="13" FontAttributes="Bold" LineBreakMode="WordWrap"/>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="2" VerticalOptions="Start">
+                                    <Label Text="Valor:" TextColor="#999999" FontSize="12" HorizontalOptions="End"/>
+                                    <Label Text="{Binding ValorFormatado}" TextColor="#8CC63F" FontSize="16" FontAttributes="Bold" HorizontalOptions="End"/>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Label Text="Selecionar >" TextColor="#0098DA" FontSize="12" HorizontalOptions="End" Margin="0,5,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="2" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <Image Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding HomeCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ChatCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ProfileCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CalendarCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             x:Class="GamirSaudeApp.Views.EditarPerfilPage"
+             x:DataType="viewmodels:EditarPerfilViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding PageAppearingCommand}" 
+                                        xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"/>
+    </ContentPage.Behaviors>
+    
+    <Grid RowDefinitions="Auto, *">
+
+        <Grid Grid.Row="0" HeightRequest="60" Padding="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ImageButton Grid.Column="0" HeightRequest="20" WidthRequest="20" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                <ImageButton.Source>
+                    <FontImageSource Glyph="&lt;" Color="#0098DA" Size="25"/>
+                </ImageButton.Source>
+            </ImageButton>
+            <Label Grid.Column="1" Text="Editar Perfil" TextColor="#0098DA" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="15" Padding="30,10">
+
+                <Grid HorizontalOptions="Center" HeightRequest="130" WidthRequest="130">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding AlterarFotoCommand}"/>
+                    </Grid.GestureRecognizers>
+
+                    <Border StrokeShape="RoundRectangle 60" 
+                            StrokeThickness="0" 
+                            HeightRequest="120" 
+                            WidthRequest="120" 
+                            BackgroundColor="#D6E4FF" 
+                            HorizontalOptions="Center" 
+                            VerticalOptions="Center">
+
+                        <Grid>
+                            <Grid.Clip>
+                                <EllipseGeometry Center="60,60" RadiusX="60" RadiusY="60" />
+                            </Grid.Clip>
+
+                            <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+                                  Fill="#0098DA" 
+                                  Stroke="#000000" 
+                                  StrokeThickness="1" 
+                                  Aspect="Uniform" 
+                                  HeightRequest="60" 
+                                  WidthRequest="60" 
+                                  HorizontalOptions="Center" 
+                                  VerticalOptions="Center"
+                                  IsVisible="{Binding NaoTemFoto}"/>
+
+                            <Image Source="{Binding FotoPerfilSource}"
+                                   Aspect="AspectFill"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill"
+                                   IsVisible="{Binding TemFoto}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border BackgroundColor="#0098DA" StrokeShape="RoundRectangle 15" HeightRequest="34" WidthRequest="34" 
+                            HorizontalOptions="End" VerticalOptions="End" Margin="10" StrokeThickness="2" Stroke="White">
+                        <Label Text="📷" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" FontSize="16"/>
+                    </Border>
+                </Grid>
+
+                <Label Text="Toque na foto para alterar" FontSize="12" TextColor="#666666" HorizontalOptions="Center" Margin="0,-10,0,10"/>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Nome Completo" TextColor="Gray" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#F0F0F0" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding Nome}" IsReadOnly="True" TextColor="#666666" VerticalOptions="Center"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="CPF" TextColor="Gray" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#F0F0F0" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding Cpf}" IsReadOnly="True" TextColor="#666666" VerticalOptions="Center"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Email" TextColor="Gray" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#F0F0F0" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding Email}" IsReadOnly="True" TextColor="#666666" VerticalOptions="Center"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Sexo" TextColor="Gray" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#F0F0F0" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding Sexo}" IsReadOnly="True" TextColor="#666666" VerticalOptions="Center"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Data De Nascimento" TextColor="Gray" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#F0F0F0" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding DataNascimento, StringFormat='{0:dd/MM/yyyy}'}" IsReadOnly="True" TextColor="#666666" VerticalOptions="Center"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <BoxView HeightRequest="1" Color="#E0E0E0" Margin="0,10"/>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Celular (Editável)" TextColor="#0098DA" FontAttributes="Bold" FontSize="14"/>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="#0098DA" BackgroundColor="White" HeightRequest="50" Padding="15,0">
+                        <Entry Text="{Binding Celular}" Placeholder="(00) 00000-0000" Keyboard="Telephone" TextColor="Black" VerticalOptions="Center" FontAttributes="Bold"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Button Text="Atualizar Perfil"
+                        Command="{Binding AtualizarPerfilCommand}"
+                        BackgroundColor="#0098DA"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="25"
+                        HeightRequest="50"
+                        Margin="0,20,0,20"
+                        IsEnabled="{Binding IsNotBusy}"/>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="#0098DA" HorizontalOptions="Center"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

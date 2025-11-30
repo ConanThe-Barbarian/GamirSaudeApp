@@ -13,69 +13,69 @@ namespace GamirSaudeApp.ViewModels
 {
     public partial class AgendarConsultaViewModel : BaseViewModel
     {
-        private readonly GamirApiService _gamirApiService;
+        // 1. DADOS (Mock)
+        public ObservableCollection<string> Especialidades { get; } = new ObservableCollection<string>
+        {
+            "Cardiologia",
+            "Dermatologia",
+            "Ginecologia",
+            "Ortopedia",
+            "Pediatria",
+            "Clínico Geral"
+        };
 
         [ObservableProperty]
-        private ObservableCollection<Especialidade> especialidades;
+        private string especialidadeSelecionada;
 
-        [ObservableProperty]
-        private Especialidade especialidadeSelecionada;
-
-        // NOVO: Propriedade para guardar o ID do procedimento assim que a especialidade é selecionada
-        private int idProcedimentoSelecionado;
-
-        public AgendarConsultaViewModel(GamirApiService gamirApiService)
-        {
-            _gamirApiService = gamirApiService;
-            Especialidades = new ObservableCollection<Especialidade>();
-        }
-
-        public async Task InitializeAsync()
-        {
-            await PageAppearing();
-        }
-
+        // --- NOVO COMANDO PARA CORRIGIR O ERRO ---
         [RelayCommand]
         private async Task PageAppearing()
         {
-            if (Especialidades.Count > 0) return; // Não carrega se já tiver dados
-
-            var lista = await _gamirApiService.GetEspecialidadesAsync();
-
-            if (lista != null)
-            {
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    Especialidades.Clear();
-                    foreach (var item in lista)
-                    {
-                        Especialidades.Add(item);
-                    }
-                });
-            }
+            // Por enquanto não faz nada, pois os dados estão fixos acima.
+            // No futuro, aqui chamaremos: await _apiService.GetEspecialidades();
+            await Task.CompletedTask;
         }
 
-        // NOVO MÉTODO PARCIAL: Captura o IdProcedimento da Especialidade Selecionada
-        partial void OnEspecialidadeSelecionadaChanged(Especialidade value)
+        // 2. COMANDOS PRINCIPAIS
+        [RelayCommand]
+        private async Task Voltar()
         {
-            if (value != null)
-            {
-                // Guarda o ID para ser enviado na navegação
-                idProcedimentoSelecionado = value.IdProcedimento;
-            }
+            await Shell.Current.GoToAsync("..");
         }
 
         [RelayCommand]
         private async Task VerProfissionais()
         {
-            if (EspecialidadeSelecionada == null)
+            if (string.IsNullOrEmpty(EspecialidadeSelecionada))
             {
-                await Shell.Current.DisplayAlert("Atenção", "Por favor, selecione uma especialidade.", "OK");
+                await Shell.Current.DisplayAlert("Atenção", "Selecione uma especialidade primeiro.", "OK");
                 return;
             }
 
-            // CORREÇÃO AQUI: Navega, passando o NOME da especialidade E o ID do Procedimento como parâmetros
-            await Shell.Current.GoToAsync($"{nameof(MedicosDisponiveisPage)}?EspecialidadeNome={EspecialidadeSelecionada.Nome}&IdProcedimento={idProcedimentoSelecionado}");
+            // NAVEGAÇÃO CORRIGIDA: Vai para a lista de cartões de médicos
+            await Shell.Current.GoToAsync($"{nameof(MedicosListaPage)}?Especialidade={EspecialidadeSelecionada}");
         }
+
+        [RelayCommand]
+        private async Task FaleConosco()
+        {
+            await Shell.Current.DisplayAlert("Contato", "Abrindo WhatsApp do suporte...", "OK");
+        }
+
+        // 3. COMANDOS DA BARRA INFERIOR
+        [RelayCommand]
+        private async Task Home()
+        {
+            await Shell.Current.GoToAsync("//DashboardPage");
+        }
+
+        [RelayCommand]
+        private async Task Chat() { /* Lógica futura */ }
+
+        [RelayCommand]
+        private async Task Profile() { /* Lógica futura */ }
+
+        [RelayCommand]
+        private async Task Calendar() { /* Lógica futura */ }
     }
 }

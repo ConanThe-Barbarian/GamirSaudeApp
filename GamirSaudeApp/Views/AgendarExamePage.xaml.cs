@@ -13,17 +13,5 @@ public partial class AgendarExamePage : ContentPage
         BindingContext = viewModel;
     }
 
-    // 3. O GATILHO: Este método é chamado sempre que a página vai aparecer
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        if (BindingContext is AgendarExameViewModel viewModel)
-        {
-            // 4. A AÇÃO: Executamos o comando que busca os dados da API
-            if (viewModel.PageAppearingCommand.CanExecute(null))
-            {
-                viewModel.PageAppearingCommand.Execute(null);
-            }
-        }
-    }
+    // 3. O GATILHO: Este método é chamado sempre que a página vai aparece    }
 }

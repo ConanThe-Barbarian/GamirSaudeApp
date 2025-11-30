@@ -1,90 +1,163 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             x:DataType="vm:ProfileViewModel"
              x:Class="GamirSaudeApp.Views.ProfilePage"
-             Title="Meu Perfil"
-             Shell.BackgroundColor="#0098da"
-             Shell.TitleColor="White"
-             Shell.NavBarIsVisible="True">
-
-    <ScrollView BackgroundColor="#F0F2F5">
-        <VerticalStackLayout Spacing="10" Padding="20">
-
-            <Frame Padding="20" CornerRadius="10" Margin="0,10,0,0" BackgroundColor="White" BorderColor="Transparent">
-                <VerticalStackLayout Spacing="15">
-                    <Label Text="Informações Pessoais" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
-
-                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto">
-                        <Label Grid.Row="0" Grid.Column="0" Text="Nome:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Nome}" VerticalOptions="Center"/>
-
-                        <Label Grid.Row="1" Grid.Column="0" Text="CPF:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Cpf}" VerticalOptions="Center"/>
-
-                        <Label Grid.Row="2" Grid.Column="0" Text="Nasc:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding DataNascimento}" VerticalOptions="Center"/>
-
-                        <Label Grid.Row="3" Grid.Column="0" Text="Sexo:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="3" Grid.Column="1" Text="{Binding Sexo}" VerticalOptions="Center"/>
-
-                        <Label Grid.Row="4" Grid.Column="0" Text="Telefone:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="4" Grid.Column="1" Text="{Binding Telefone}" VerticalOptions="Center"/>
-                    </Grid>
-                </VerticalStackLayout>
-            </Frame>
-
-            <Frame Padding="20" CornerRadius="10" BackgroundColor="White" BorderColor="Transparent">
-                <VerticalStackLayout Spacing="15">
-                    <Label Text="Informações da Conta" FontSize="18" FontAttributes="Bold" TextColor="Black"/>
-
-                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
-                        <Label Grid.Row="0" Grid.Column="0" Text="E-mail:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Email}" VerticalOptions="Center"/>
-
-                        <Label Grid.Row="1" Grid.Column="0" Text="Status:" FontAttributes="Bold" VerticalOptions="Center"/>
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding StatusConta}" VerticalOptions="Center">
-                            <Label.Style>
-                                <Style TargetType="Label">
-                                    <Setter Property="TextColor" Value="Red"/>
-                                    <Style.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding ContaVerificada}" Value="True">
-                                            <Setter Property="TextColor" Value="Green"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Label.Style>
-                        </Label>
-                    </Grid>
-
-                    <Button Text="Verificar Conta Agora"
-                             IsVisible="{Binding ContaVerificada, Converter={StaticResource InverseBoolConverter}}"
-                             Command="{Binding VerificarContaCommand}" BackgroundColor="Orange" TextColor="White" CornerRadius="20" Margin="0,10,0,0"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <Button Text="Sair da Conta"
-                    Command="{Binding LogoutCommand}" BackgroundColor="Transparent"
-                    TextColor="Red"
-                    BorderColor="Red"
-                    BorderWidth="1"
-                    CornerRadius="10"
-                    HeightRequest="50"
-                    Margin="0,20,0,0"/>
-            <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#0098da" VerticalOptions="Center" HorizontalOptions="Center" Margin="0,20,0,0"/>
-
-        </VerticalStackLayout>
-    </ScrollView>
+             x:DataType="viewmodels:ProfileViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
 
     <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding AppearingCommand}"/>
+        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding OnAppearingCommand}" />
     </ContentPage.Behaviors>
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:InverseBoolConverter x:Key="InverseBoolConverter" xmlns:converters="clr-namespace:GamirSaudeApp.Converters"/>
-        </ResourceDictionary>
-    </ContentPage.Resources>
 
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <Grid Grid.Row="0" HeightRequest="60" Padding="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ImageButton Grid.Column="0" HeightRequest="20" WidthRequest="20" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                <ImageButton.Source>
+                    <FontImageSource Glyph="&lt;" Color="#0098DA" Size="25"/>
+                </ImageButton.Source>
+            </ImageButton>
+
+            <Label Grid.Column="1" Text="Perfil" TextColor="#0098DA" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20" Padding="30,10">
+
+                <Border StrokeShape="RoundRectangle 60"
+                        StrokeThickness="0"
+                        HeightRequest="120"
+                        WidthRequest="120"
+                        BackgroundColor="#D6E4FF"
+                        HorizontalOptions="Center">
+
+                    <Grid>
+                        <Grid.Clip>
+                            <EllipseGeometry Center="60,60" RadiusX="60" RadiusY="60" />
+                        </Grid.Clip>
+
+                        <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+                              Fill="#0098DA" 
+                              Stroke="#000000" 
+                              StrokeThickness="1" 
+                              Aspect="Uniform" 
+                              HeightRequest="60" 
+                              WidthRequest="60" 
+                              HorizontalOptions="Center" 
+                              VerticalOptions="Center"
+                              IsVisible="{Binding NaoTemFoto}"/>
+
+                        <Image Source="{Binding FotoUsuario}"
+                               Aspect="AspectFill"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill"
+                               IsVisible="{Binding TemFoto}"/>
+                    </Grid>
+                </Border>
+
+                <Label Text="{Binding NomeUsuario}" 
+                       TextColor="Black" 
+                       FontSize="22" 
+                       FontAttributes="Bold" 
+                       HorizontalOptions="Center"
+                       TextTransform="Uppercase"/>
+
+                <VerticalStackLayout Spacing="25" Margin="0,20,0,0">
+
+                    <Grid ColumnDefinitions="50, *, 30">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding AlterarDadosCommand}"/>
+                        </Grid.GestureRecognizers>
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#D6E4FF" HeightRequest="50" WidthRequest="50">
+                            <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" Fill="#0098DA" Aspect="Uniform" HeightRequest="25" WidthRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="Alterar Dados" TextColor="Black" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" Margin="15,0,0,0"/>
+                        <Label Grid.Column="2" Text="&gt;" TextColor="#D6E4FF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="50, *, 30">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NotificacoesCommand}"/>
+                        </Grid.GestureRecognizers>
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#D6E4FF" HeightRequest="50" WidthRequest="50">
+                            <Path Data="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21" Fill="#0098DA" Aspect="Uniform" HeightRequest="25" WidthRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="Notificações" TextColor="Black" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" Margin="15,0,0,0"/>
+                        <Label Grid.Column="2" Text="&gt;" TextColor="#D6E4FF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="50, *, 30">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding VerificarContaCommand}"/>
+                        </Grid.GestureRecognizers>
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#D6E4FF" HeightRequest="50" WidthRequest="50">
+                            <Path Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M8.9,6C8.9,4.29 10.29,2.9 12,2.9C13.71,2.9 15.1,4.29 15.1,6V8H8.9V6Z" Fill="#0098DA" Aspect="Uniform" HeightRequest="25" WidthRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="Verificar Conta" TextColor="Black" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" Margin="15,0,0,0"/>
+                        <Label Grid.Column="2" Text="&gt;" TextColor="#D6E4FF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="50, *, 30">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SuporteCommand}"/>
+                        </Grid.GestureRecognizers>
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#D6E4FF" HeightRequest="50" WidthRequest="50">
+                            <Path Data="M10,19H13V22H10V19M12,2C17.35,2 22,6.35 22,12C22,17.65 17.35,22 12,22C6.65,22 2,17.65 2,12C2,6.35 6.65,2 12,2M12,20C16.47,20 20,16.47 20,12C20,7.53 16.47,4 12,4C7.53,4 4,7.53 4,12C4,16.47 7.53,20 12,20M12,6C14.21,6 16,7.79 16,10C16,12.21 13.5,12.5 13.5,15H10.5C10.5,11.5 16,11.5 16,10C16,8.3 13.5,8.5 12,8.5C10.5,8.5 10,10 10,10H7C7,7 9.5,6 12,6Z" Fill="#0098DA" Aspect="Uniform" HeightRequest="25" WidthRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="Suporte" TextColor="Black" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" Margin="15,0,0,0"/>
+                        <Label Grid.Column="2" Text="&gt;" TextColor="#D6E4FF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="50, *, 30">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding LogoutCommand}"/>
+                        </Grid.GestureRecognizers>
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#D6E4FF" HeightRequest="50" WidthRequest="50">
+                            <Path Data="M16,17V14H9V10H16V7L21,12L16,17M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H14A2,2 0 0,0 16,20V18H14V20H6V4H14V6H16V4A2,2 0 0,0 14,2Z" Fill="#0098DA" Aspect="Uniform" HeightRequest="25" WidthRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="Logout" TextColor="Black" FontSize="16" FontAttributes="Bold" VerticalOptions="Center" Margin="15,0,0,0"/>
+                        <Label Grid.Column="2" Text="&gt;" TextColor="#D6E4FF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="End"/>
+                    </Grid>
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+            <Grid ColumnDefinitions="*,*,*,*">
+
+                <Image Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding HomeCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+
+                <Image Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ChatCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+
+                <Image Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center"/>
+
+                <Image Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CalendarCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+
+            </Grid>
+        </Border>
+
+    </Grid>
 </ContentPage>

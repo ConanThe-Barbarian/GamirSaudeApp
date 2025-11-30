@@ -1,104 +1,169 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GamirSaudeApp.Views;
 using GamirSaudeApp.Services;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls; // Adicionado para DisplayAlert
+using GamirSaudeApp.Views;
+using System.Diagnostics;
 
 namespace GamirSaudeApp.ViewModels
 {
-    [QueryProperty(nameof(NeedsRefresh), "refresh")]
     public partial class DashboardViewModel : BaseViewModel
     {
         private readonly UserDataService _userDataService;
-        [ObservableProperty] string nomeUsuario;
-        [ObservableProperty] int pontosFidelidade;
-        [ObservableProperty] bool contaNaoVerificada;
-        [ObservableProperty] bool needsRefresh;
+        private readonly GamirApiService _apiService;
 
-        public DashboardViewModel(UserDataService userDataService)
+        // --- PROPRIEDADES ---
+        private string nomeUsuario;
+        public string NomeUsuario
+        {
+            get => nomeUsuario;
+            set => SetProperty(ref nomeUsuario, value);
+        }
+
+        private int pontosFidelidade;
+        public int PontosFidelidade
+        {
+            get => pontosFidelidade;
+            set => SetProperty(ref pontosFidelidade, value);
+        }
+
+        private bool isContaVerificada;
+        public bool IsContaVerificada
+        {
+            get => isContaVerificada;
+            set => SetProperty(ref isContaVerificada, value);
+        }
+
+        private bool isContaNaoVerificada;
+        public bool IsContaNaoVerificada
+        {
+            get => isContaNaoVerificada;
+            set => SetProperty(ref isContaNaoVerificada, value);
+        }
+
+        // --- IMAGEM ---
+        private ImageSource fotoUsuario;
+        public ImageSource FotoUsuario
+        {
+            get => fotoUsuario;
+            set => SetProperty(ref fotoUsuario, value);
+        }
+
+        private bool temFoto;
+        public bool TemFoto
+        {
+            get => temFoto;
+            set => SetProperty(ref temFoto, value);
+        }
+
+        private bool naoTemFoto;
+        public bool NaoTemFoto
+        {
+            get => naoTemFoto;
+            set => SetProperty(ref naoTemFoto, value);
+        }
+
+        private int _totalAgendamentosRealizados = 0;
+
+        public DashboardViewModel(UserDataService userDataService, GamirApiService apiService)
         {
             _userDataService = userDataService;
-            AtualizarDadosUsuario();
+            _apiService = apiService;
         }
 
-        private void AtualizarDadosUsuario()
-        {
-            NomeUsuario = _userDataService.NomeUsuario;
-            PontosFidelidade = 3200;
-            ContaNaoVerificada = !_userDataService.ContaVerificada;
-        }
-
+        // COMANDO DISPARADO AO ABRIR A TELA
         [RelayCommand]
-        private void OnAppearing()
+        private async Task PageAppearing()
         {
-            AtualizarDadosUsuario();
+            await CarregarDadosUsuario();
         }
 
-        partial void OnNeedsRefreshChanged(bool value)
+        private async Task CarregarDadosUsuario()
         {
-            if (value)
+            // 1. Dados Básicos do Cofre
+            NomeUsuario = _userDataService.NomeUsuario ?? "Visitante";
+            IsContaVerificada = _userDataService.ContaVerificada;
+            IsContaNaoVerificada = !IsContaVerificada;
+            PontosFidelidade = IsContaVerificada ? 150 : 0;
+
+            // 2. SEGURANÇA: Se não tem foto no cofre, tenta buscar na API
+            if (string.IsNullOrEmpty(_userDataService.FotoPerfil) && _userDataService.IdUserApp > 0)
             {
-                AtualizarDadosUsuario();
-                NeedsRefresh = false;
+                try
+                {
+                    var perfil = await _apiService.GetUserProfileAsync(_userDataService.IdUserApp);
+                    if (perfil != null && !string.IsNullOrEmpty(perfil.FotoPerfil))
+                    {
+                        _userDataService.FotoPerfil = perfil.FotoPerfil; // Atualiza cofre
+                    }
+                }
+                catch { } // Falha silenciosa, mantém sem foto
+            }
+
+            // 3. Processa a imagem para exibição
+            AtualizarImagemVisual();
+        }
+
+        private void AtualizarImagemVisual()
+        {
+            if (!string.IsNullOrEmpty(_userDataService.FotoPerfil))
+            {
+                try
+                {
+                    byte[] imageBytes = Convert.FromBase64String(_userDataService.FotoPerfil);
+                    FotoUsuario = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    TemFoto = true;
+                    NaoTemFoto = false;
+                }
+                catch
+                {
+                    TemFoto = false;
+                    NaoTemFoto = true;
+                }
+            }
+            else
+            {
+                TemFoto = false;
+                NaoTemFoto = true;
             }
         }
 
-        // -----------------------------------------------------------
-        // REFORÇO DE ACESSO: GATILHO AGENDAR CONSULTA
-        // -----------------------------------------------------------
-        [RelayCommand]
-        private async Task AgendarConsulta()
+        private async Task<bool> PodeAgendar()
         {
-            if (!_userDataService.ContaVerificada)
+            if (IsContaVerificada) return true;
+            if (_totalAgendamentosRealizados >= 1)
             {
-                await Application.Current.MainPage.DisplayAlert(
-                    "Acesso Bloqueado",
-                    "Sua conta precisa ser verificada para realizar agendamentos. Por favor, verifique seu e-mail para obter o ID de Paciente da clínica.",
-                    "OK");
-                return;
+                await Shell.Current.DisplayAlert("Limite", "Verifique sua conta.", "OK");
+                return false;
             }
-
-            // Se verificado, prossegue com a navegação
-            await Shell.Current.GoToAsync(nameof(AgendarConsultaPage));
+            return true;
         }
 
-        // -----------------------------------------------------------
-        // REFORÇO DE ACESSO: GATILHO AGENDAR EXAME
-        // -----------------------------------------------------------
+        // --- NAVEGAÇÃO ---
         [RelayCommand]
-        private async Task AgendarExame()
+        private async Task NavigateToAgendarConsulta()
         {
-            if (!_userDataService.ContaVerificada)
-            {
-                await Application.Current.MainPage.DisplayAlert(
-                    "Acesso Bloqueado",
-                    "Sua conta precisa ser verificada para realizar agendamentos. Por favor, verifique seu e-mail para obter o ID de Paciente da clínica.",
-                    "OK");
-                return;
-            }
-
-            // Se verificado, prossegue com a navegação
-            await Shell.Current.GoToAsync(nameof(AgendarExamePage));
+            if (await PodeAgendar()) await Shell.Current.GoToAsync(nameof(AgendarConsultaPage));
         }
-
 
         [RelayCommand]
-        private async Task VerHistorico()
+        private async Task NavigateToAgendarExame()
         {
-            await Shell.Current.GoToAsync(nameof(HistoricoPage));
+            if (await PodeAgendar()) await Shell.Current.GoToAsync(nameof(AgendarExamePage));
         }
 
-        // --- FIM DO COMANDO DE LOGOUT ---
+        [RelayCommand] private async Task NavigateToMeusAgendamentos() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
 
-        // --- NOVO COMANDO PARA NAVEGAR PARA O PERFIL ---
         [RelayCommand]
-        private async Task GoToProfile()
+        private async Task NavigateToMeusLaudos()
         {
-            await Shell.Current.GoToAsync(nameof(ProfilePage));
+            if (!IsContaVerificada) { await Shell.Current.DisplayAlert("Restrito", "Verifique sua conta.", "OK"); return; }
+            await Shell.Current.GoToAsync(nameof(MeusLaudosPage));
         }
-        // --- FIM DO NOVO COMANDO ---
+
+        [RelayCommand] private async Task NavigateToProfile() => await Shell.Current.GoToAsync(nameof(ProfilePage));
+
+        [RelayCommand] private async Task Home() { }
+        [RelayCommand] private async Task Chat() { await Shell.Current.DisplayAlert("Em Breve", "Chat em desenvolvimento.", "OK"); }
+        [RelayCommand] private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
     }
 }
-
-    

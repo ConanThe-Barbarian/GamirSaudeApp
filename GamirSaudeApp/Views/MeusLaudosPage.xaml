@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:models="clr-namespace:GamirSaudeApp.Models"
+             x:Class="GamirSaudeApp.Views.MeusLaudosPage"
+             x:DataType="viewmodels:MeusLaudosViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F5F5F5">
+
+    <Grid RowDefinitions="Auto, Auto, *, Auto">
+
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="Meus Laudos" TextColor="White" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="1" StrokeThickness="0" BackgroundColor="White" Margin="15" Padding="15" StrokeShape="RoundRectangle 15">
+            <Border.Shadow>
+                <Shadow Brush="Gray" Offset="1,1" Radius="3" Opacity="0.1"/>
+            </Border.Shadow>
+            <VerticalStackLayout Spacing="15">
+                <Label Text="Filtrar por período" TextColor="#666666" FontSize="14" FontAttributes="Bold"/>
+
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                    <Border Grid.Column="0" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#D6E4FF" BackgroundColor="#F9F9F9" Padding="10,0" HeightRequest="45">
+                        <Grid ColumnDefinitions="Auto, *">
+                            <Label Grid.Column="0" Text="De:" TextColor="#0098DA" VerticalOptions="Center" FontSize="12" Margin="0,0,5,0"/>
+                            <DatePicker Grid.Column="1" Date="{Binding DataInicio}" Format="dd/MM/yy" TextColor="#333333" VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="1" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#D6E4FF" BackgroundColor="#F9F9F9" Padding="10,0" HeightRequest="45">
+                        <Grid ColumnDefinitions="Auto, *">
+                            <Label Grid.Column="0" Text="Até:" TextColor="#0098DA" VerticalOptions="Center" FontSize="12" Margin="0,0,5,0"/>
+                            <DatePicker Grid.Column="1" Date="{Binding DataFim}" Format="dd/MM/yy" TextColor="#333333" VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <Button Text="BUSCAR" 
+                        Command="{Binding FiltrarLaudosCommand}"
+                        BackgroundColor="#0098DA" 
+                        TextColor="White" 
+                        FontAttributes="Bold" 
+                        CornerRadius="20" 
+                        HeightRequest="40"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding LaudosExibidos}" Margin="15,0">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                    <Label Text="Nenhum laudo encontrado." TextColor="Gray"/>
+                    <Label Text="Tente mudar as datas do filtro." TextColor="#999999" FontSize="12"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:LaudoModel">
+                    <Border StrokeShape="RoundRectangle 12" StrokeThickness="0" BackgroundColor="White" Margin="0,0,0,12" Padding="15">
+                        <Border.Shadow>
+                            <Shadow Brush="Gray" Offset="2,2" Radius="3" Opacity="0.1"/>
+                        </Border.Shadow>
+
+                        <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
+
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="{Binding DataExame, StringFormat='{0:dd/MM/yyyy}'}" TextColor="#999999" FontSize="12"/>
+
+                                <Label Text="{Binding NomeExame}" TextColor="#0098DA" FontSize="16" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
+
+                                <Border BackgroundColor="{Binding StatusColor}" StrokeThickness="0" StrokeShape="RoundRectangle 5" HorizontalOptions="Start" Padding="8,2" Margin="0,5,0,0">
+                                    <Label Text="{Binding Status}" TextColor="White" FontSize="10" FontAttributes="Bold"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Button Text="{Binding TextoBotao}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MeusLaudosViewModel}}, Path=VerLaudoCommand}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding BotaoHabilitado}"
+                                        Opacity="{Binding OpacidadeBotao}"
+                                        FontSize="11"
+                                        HeightRequest="35"
+                                        Padding="10,0"
+                                        CornerRadius="17"
+                                        BackgroundColor="#0098DA"
+                                        TextColor="White">
+                                    <Button.ImageSource>
+                                        <FontImageSource Glyph="⬇" Color="White" Size="12"/>
+                                    </Button.ImageSource>
+                                </Button>
+                            </VerticalStackLayout>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="3" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <Image Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding HomeCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ChatCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ProfileCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+                <Image Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CalendarCommand}" />
+                    </Image.GestureRecognizers>
+                </Image>
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

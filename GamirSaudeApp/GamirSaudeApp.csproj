@@ -6,7 +6,7 @@
 	<PropertyGroup>
 
 		<TargetFrameworks>net8.0-android</TargetFrameworks>
-
+		
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
 
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
@@ -51,7 +51,7 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 
 		<!-- App Identifier -->
 
-		<ApplicationId>com.companyname.gamirsaudeapp</ApplicationId>
+		<ApplicationId>com.gamirsaude.app</ApplicationId>
 
 
 
@@ -83,12 +83,13 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 
 		<!-- App Icon -->
 
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<MauiIcon Include="Resources\AppIcon\iconeapp.svg" />
 
 
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#0098da" BaseSize="128,128" />
+
+		<MauiSplashScreen Include="Resources\Splash\splash_gamir.png" />
 		<!-- Images -->
 
 		<MauiImage Include="Resources\Images\*" />
@@ -143,6 +144,12 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 	  <Compile Update="Views\AgendamentoSucessoPage.xaml.cs">
 	    <DependentUpon>AgendamentoSucessoPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\MedicoCalendarioPage.xaml.cs">
+	    <DependentUpon>MedicoCalendarioPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\ExameCalendarioPage.xaml.cs">
+	    <DependentUpon>ExameCalendarioPage.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 
@@ -155,6 +162,8 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\DashboardPage.xaml">
   <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\EditarPerfilPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\EsqueciSenhaPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\ExamesEspecificosPage.xaml">
@@ -166,11 +175,19 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 			    <Generator>MSBuild:Compile</Generator>
 
 			 
-		</MauiXaml><MauiXaml Update="Views\MedicosDisponiveisPage.xaml">
+		</MauiXaml><MauiXaml Update="Views\MedicoCalendarioPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\AgendamentoSucessoPage.xaml">
   <Generator>MSBuild:Compile</Generator>
-</MauiXaml><MauiXaml Update="Views\MedicosExamePage.xaml">
+</MauiXaml><MauiXaml Update="Views\MedicosExameListaPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\ExameCalendarioPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\MedicosListaPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\MeusLaudosPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\Popups\LogoutPopup.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\ProfilePage.xaml">
   <Generator>MSBuild:Compile</Generator>
@@ -179,6 +196,8 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 </MauiXaml><MauiXaml Update="Views\RegisterPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\VerifyAccountPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\VerLaudoPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml>
 

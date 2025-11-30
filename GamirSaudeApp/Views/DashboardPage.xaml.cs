@@ -4,21 +4,14 @@ namespace GamirSaudeApp.Views;
 
 public partial class DashboardPage : ContentPage
 {
-    // Apenas UM construtor é necessário
+    // CORREÇÃO: Recebe o ViewModel via Injeção de Dependência
     public DashboardPage(DashboardViewModel viewModel)
     {
         InitializeComponent();
+
+        // Conecta o ViewModel à tela
         BindingContext = viewModel;
     }
 
-    // Apenas UM método OnAppearing é necessário
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        if (BindingContext is DashboardViewModel vm)
-        {
-            // A chamada deve corresponder ao nome do método + "Command"
-            vm.AppearingCommand.Execute(null);
-        }
-    }
+    // Se tiver lógica de OnAppearing, mantenha aqui
 }

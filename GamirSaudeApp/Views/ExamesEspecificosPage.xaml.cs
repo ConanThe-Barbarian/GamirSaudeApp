@@ -14,15 +14,5 @@ public partial class ExamesEspecificosPage : ContentPage
     }
 
     // 3. O GATILHO: Executa a ação quando a página aparece
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        if (BindingContext is ExamesEspecificosViewModel viewModel)
-        {
-            if (viewModel.PageAppearingCommand.CanExecute(null))
-            {
-                viewModel.PageAppearingCommand.Execute(null);
-            }
-        }
-    }
+
 }

@@ -1,81 +1,131 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
              xmlns:models="clr-namespace:GamirSaudeApp.Models"
-             xmlns:converters="clr-namespace:GamirSaudeApp.Converters" xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit" x:DataType="vm:HistoricoViewModel"
              x:Class="GamirSaudeApp.Views.HistoricoPage"
-             Title="Meus Agendamentos"
-             Shell.BackgroundColor="#0098da"
-             Shell.TitleColor="White"
-             Shell.NavBarIsVisible="True">
+             x:DataType="viewmodels:HistoricoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#E0E0E0">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:DateToBoolConverter x:Key="DateToBoolConverter" />
-            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <Grid RowDefinitions="Auto, Auto, *">
 
-    <Grid RowDefinitions="*, Auto" BackgroundColor="#F0F2F5">
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="Historico de Agendamentos" TextColor="White" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
 
-        <CollectionView ItemsSource="{Binding Agendamentos}"
-                        Grid.Row="0"
-                        Margin="10"
-                        EmptyView="Nenhum agendamento encontrado.">
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" Padding="40,20">
+            <Border Grid.Column="0" StrokeShape="RoundRectangle 10,0,0,10" StrokeThickness="0" HeightRequest="40">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding MostrarPendentesCommand}"/>
+                </Border.GestureRecognizers>
+                <Label Text="Pendentes" HorizontalOptions="Center" VerticalOptions="Center" FontSize="16">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsPendentesSelected}" Value="True">
+                            <Setter Property="TextColor" Value="#0098DA"/>
+                            <Setter Property="FontAttributes" Value="Bold"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsPendentesSelected}" Value="False">
+                            <Setter Property="TextColor" Value="#999999"/>
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsPendentesSelected}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#E3E9FF"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsPendentesSelected}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#D9D9D9"/>
+                    </DataTrigger>
+                </Border.Triggers>
+            </Border>
+
+            <Border Grid.Column="1" StrokeShape="RoundRectangle 0,10,10,0" StrokeThickness="0" HeightRequest="40">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding MostrarFechadosCommand}"/>
+                </Border.GestureRecognizers>
+                <Label Text="Fechados" HorizontalOptions="Center" VerticalOptions="Center" FontSize="16">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsFechadosSelected}" Value="True">
+                            <Setter Property="TextColor" Value="#0098DA"/>
+                            <Setter Property="FontAttributes" Value="Bold"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsFechadosSelected}" Value="False">
+                            <Setter Property="TextColor" Value="#999999"/>
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsFechadosSelected}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#E3E9FF"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsFechadosSelected}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#D9D9D9"/>
+                    </DataTrigger>
+                </Border.Triggers>
+            </Border>
+        </Grid>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding AgendamentosExibidos}" Margin="15,0">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:AgendamentoHistorico">
-                    <Frame Padding="15" Margin="0,0,0,10" CornerRadius="10" BorderColor="#E0E0E0">
-                        <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="15" Margin="0,0,0,15">
+                        <VerticalStackLayout Spacing="10">
 
-                            <VerticalStackLayout Grid.Row="0" Grid.Column="0">
-                                <Label Text="{Binding DataHoraMarcada, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontAttributes="Bold" FontSize="16" TextColor="Black"/>
-                                <Label Text="{Binding Procedimento}" TextColor="#333333"/>
-                                <Label Text="{Binding NomePrestador}" FontSize="12" TextColor="#555555"/>
+                            <Grid ColumnDefinitions="*, Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding NomePrestador}" TextColor="Black" FontSize="18" FontAttributes="Bold"/>
+                                    <Label Text="{Binding Especialidade}" TextColor="#8EA6CC" FontSize="14"/>
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" HeightRequest="20" WidthRequest="20" StrokeShape="RoundRectangle 10" Stroke="#666666" BackgroundColor="Transparent" VerticalOptions="Start"/>
+                            </Grid>
+
+                            <VerticalStackLayout IsVisible="{Binding IsPendente}" Spacing="8">
+                                <Border BackgroundColor="{Binding StatusColor}" StrokeThickness="0" StrokeShape="RoundRectangle 15" HorizontalOptions="Start" Padding="15,5">
+                                    <Label Text="{Binding Status}" TextColor="{Binding StatusTextColor}" FontSize="12"/>
+                                </Border>
+
+                                <Label Text="{Binding DataHoraMarcada, StringFormat='Data: {0:dd/MM/yyyy HH:mm}h'}" TextColor="#666666" FontSize="14"/>
+
+                                <Label Text="{Binding Procedimento}" TextColor="Black" FontSize="14" FontAttributes="Bold"/>
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="Valor:" TextColor="#666666" FontSize="14"/>
+                                    <Label Text="{Binding ValorFormatado}" TextColor="#0098DA" FontAttributes="Bold" FontSize="14"/>
+                                </HorizontalStackLayout>
+
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" Margin="0,5,0,0">
+                                    <Button Grid.Column="0" Text="Confirmar" BackgroundColor="#0098DA" TextColor="White" FontSize="11" Padding="0" HeightRequest="35" CornerRadius="17" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoricoViewModel}}, Path=ConfirmarCommand}" CommandParameter="{Binding .}"/>
+                                    <Button Grid.Column="1" Text="Remarcar" BackgroundColor="#CCCCCC" TextColor="#666666" FontSize="11" Padding="0" HeightRequest="35" CornerRadius="17" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoricoViewModel}}, Path=RemarcarCommand}" CommandParameter="{Binding .}"/>
+                                    <Button Grid.Column="2" Text="Cancelar" BackgroundColor="#EB5757" TextColor="White" FontSize="11" Padding="0" HeightRequest="35" CornerRadius="17" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:HistoricoViewModel}}, Path=CancelarCommand}" CommandParameter="{Binding .}"/>
+                                </Grid>
                             </VerticalStackLayout>
 
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding StatusDisplay}"
-                                   FontSize="12" VerticalOptions="Start" HorizontalOptions="End">
-                                <Label.Style>
-                                    <Style TargetType="Label">
-                                        <Setter Property="TextColor" Value="Green"/>
-                                        <Style.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Desativado}" Value="True">
-                                                <Setter Property="TextColor" Value="Red"/>
-                                            </DataTrigger>
-                                            <MultiTrigger TargetType="Label">
-                                                <MultiTrigger.Conditions>
-                                                    <BindingCondition Binding="{Binding Desativado}" Value="False"/>
-                                                    <BindingCondition Binding="{Binding DataHoraMarcada, Converter={StaticResource DateToBoolConverter}}" Value="True"/>
-                                                </MultiTrigger.Conditions>
-                                                <Setter Property="TextColor" Value="Gray"/>
-                                            </MultiTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Label.Style>
-                            </Label>
+                            <VerticalStackLayout IsVisible="{Binding IsFechado}" Spacing="5">
+                                <Label Text="{Binding DataHoraMarcada, StringFormat='Data: {0:dd/MM/yyyy}'}" TextColor="#0098DA" FontSize="14"/>
 
-                            <Button Text="Cancelar"
-                                    Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                    Margin="0,10,0,0"
-                                    BackgroundColor="Red" TextColor="White"
-                                    HeightRequest="40" CornerRadius="20"
-                                    IsVisible="{Binding PodeCancelar}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HistoricoViewModel}}, Path=CancelarAgendamentoCommand}"
-                                    CommandParameter="{Binding .}"/>
+                                <Label Text="{Binding Procedimento}" TextColor="Black" FontSize="14" FontAttributes="Bold"/>
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="Valor:" TextColor="#666666" FontSize="14"/>
+                                    <Label Text="{Binding ValorFormatado}" TextColor="#333333" FontAttributes="Bold" FontSize="14"/>
+                                </HorizontalStackLayout>
 
-                        </Grid>
-                    </Frame>
+                                <Border BackgroundColor="#EEEEEE" StrokeThickness="0" StrokeShape="RoundRectangle 15" HorizontalOptions="End" Padding="15,5" Margin="0,5,0,0">
+                                    <Label Text="{Binding Status}" TextColor="#333333" FontSize="12"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#0098da" Grid.RowSpan="2" VerticalOptions="Center" HorizontalOptions="Center"/>
-
     </Grid>
-
-    <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding AppearingCommand}" />
-    </ContentPage.Behaviors>
-
 </ContentPage>

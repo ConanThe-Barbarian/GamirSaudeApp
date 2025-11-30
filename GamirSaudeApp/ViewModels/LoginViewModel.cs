@@ -3,23 +3,41 @@ using CommunityToolkit.Mvvm.Input;
 using GamirSaudeApp.Services;
 using GamirSaudeApp.Views;
 using System.Threading.Tasks;
-using System.Linq; // <-- CORREÇÃO 1: ADICIONADA A DIRETIVA ESSENCIAL
-using System;     // Adicionado para Exception
 
 namespace GamirSaudeApp.ViewModels
 {
     public partial class LoginViewModel : BaseViewModel
     {
-        private readonly GamirApiService _apiService;
+        private readonly GamirApiService _gamirApiService;
         private readonly UserDataService _userDataService;
 
-        [ObservableProperty] private string cpf;
-        [ObservableProperty] private string senha;
+        // 1. PROPRIEDADES VISUAIS
+        [ObservableProperty]
+        private string cpf;
 
-        public LoginViewModel(GamirApiService apiService, UserDataService userDataService)
+        [ObservableProperty]
+        private string senha;
+
+        [ObservableProperty]
+        private bool isPasswordHidden = true;
+
+        [ObservableProperty]
+        private string eyeIconSource = "eye_off_icon.png";
+
+        // 2. CONSTRUTOR
+        public LoginViewModel(GamirApiService gamirApiService, UserDataService userDataService)
         {
-            _apiService = apiService;
+            _gamirApiService = gamirApiService;
             _userDataService = userDataService;
+        }
+
+        // 3. COMANDOS
+
+        [RelayCommand]
+        private void TogglePassword()
+        {
+            IsPasswordHidden = !IsPasswordHidden;
+            EyeIconSource = IsPasswordHidden ? "eye_off_icon.png" : "eye_icon.png";
         }
 
         [RelayCommand]
@@ -27,44 +45,41 @@ namespace GamirSaudeApp.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Cpf) || string.IsNullOrWhiteSpace(Senha))
             {
-                await Shell.Current.DisplayAlert("Atenção", "Por favor, preencha o CPF e a senha.", "OK");
+                await Shell.Current.DisplayAlert("Atenção", "Por favor, preencha CPF e Senha.", "OK");
                 return;
             }
 
             IsBusy = true;
-            try
-            {
-                // <-- CORREÇÃO 2: UTILIZANDO O MÉTODO DE APOIO
-                var cpfNumerico = GetCpfNumerico();
-                var loginResponse = await _apiService.LoginAsync(cpfNumerico, Senha);
 
-                if (loginResponse?.Usuario != null)
-                {
-                    _userDataService.IdUserApp = loginResponse.Usuario.IdUserApp;
-                    _userDataService.NomeUsuario = loginResponse.Usuario.NomeUserApp;
-                    _userDataService.EmailUsuario = loginResponse.Usuario.EmailUserApp;
-                    _userDataService.ContaVerificada = loginResponse.Usuario.ContaVerificada;
-                    _userDataService.IdPacienteGamir = loginResponse.Usuario.IdPacienteGamir;
+            // Chama a API Real
+            var response = await _gamirApiService.LoginAsync(Cpf, Senha);
 
-                    await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
-                }
-                else
-                {
-                    await Shell.Current.DisplayAlert("Erro de Login", loginResponse?.Message ?? "CPF ou senha inválidos.", "OK");
-                }
-            }
-            catch (Exception ex)
+            IsBusy = false;
+
+            if (response != null)
             {
-                await Shell.Current.DisplayAlert("Falha de Comunicação", $"Ocorreu um erro: {ex.Message}", "OK");
+                // SUCESSO: Salva os dados na memória do App (Singleton)
+                _userDataService.IdUserApp = response.Id;
+                _userDataService.NomeUsuario = response.Nome;
+                _userDataService.EmailUsuario = response.Email;
+                _userDataService.ContaVerificada = response.ContaVerificada;
+                _userDataService.CpfUsuario = Cpf;
+
+                // --- CORREÇÃO CRÍTICA ---
+                // Salva a foto recebida no login para as outras telas usarem
+                _userDataService.FotoPerfil = response.FotoPerfil;
+
+                // Navega para o Dashboard (Resetando a pilha para não voltar ao login)
+                await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
             }
-            finally
+            else
             {
-                IsBusy = false;
+                await Shell.Current.DisplayAlert("Erro", "CPF ou Senha inválidos, ou erro de conexão.", "OK");
             }
         }
 
         [RelayCommand]
-        private async Task GoToRegister()
+        private async Task NavigateToRegister()
         {
             await Shell.Current.GoToAsync(nameof(RegisterPage));
         }
@@ -72,13 +87,7 @@ namespace GamirSaudeApp.ViewModels
         [RelayCommand]
         private async Task ForgotPassword()
         {
-            // Navega para a nova página de recuperação
             await Shell.Current.GoToAsync(nameof(EsqueciSenhaPage));
-        }
-
-        private string GetCpfNumerico()
-        {
-            return new string(Cpf?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
         }
     }
 }

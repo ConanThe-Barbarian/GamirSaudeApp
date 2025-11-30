@@ -8,28 +8,30 @@ namespace GamirSaudeApp.Services
 {
     public class UserDataService
     {
-        // Propriedades do usuário do APP
         public int IdUserApp { get; set; }
         public string NomeUsuario { get; set; }
         public string EmailUsuario { get; set; }
-        public bool ContaVerificada { get; set; }
 
-        // ID do paciente no sistema legado (preenchido após verificação)
+        // --- NOVAS PROPRIEDADES ---
+        public string CpfUsuario { get; set; }
+        public string TelefoneUsuario { get; set; }
+
+        public bool ContaVerificada { get; set; }
         public int? IdPacienteGamir { get; set; }
 
-        // Mantemos esta propriedade para o fluxo de agendamento que já funciona
+        public string FotoPerfil { get; set; }
+        // Propriedade de conveniência para o sistema legado
         public int IdPaciente => IdPacienteGamir ?? 0;
 
-        // --- MÉTODO CLEAR DATA (GARANTIR QUE ESTEJA COMPLETO) ---
-        public void ClearData()
+        public void LimparDados()
         {
             IdUserApp = 0;
             NomeUsuario = string.Empty;
             EmailUsuario = string.Empty;
+            CpfUsuario = string.Empty;
+            TelefoneUsuario = string.Empty;
             ContaVerificada = false;
-            IdPacienteGamir = null; // Garante que IdPaciente também volte a ser 0
-            System.Diagnostics.Debug.WriteLine("--- UserDataService.ClearData() Executado ---"); // Log de confirmação
+            IdPacienteGamir = null;
         }
-        // --- FIM DO MÉTODO CLEAR DATA ---
     }
 }

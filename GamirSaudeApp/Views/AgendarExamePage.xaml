@@ -1,40 +1,45 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
              x:Class="GamirSaudeApp.Views.AgendarExamePage"
-             x:DataType="vm:AgendarExameViewModel"
-             Title="Agendar Exame"
-             Shell.BackgroundColor="#0098da"
-             Shell.TitleColor="White"
-             Shell.NavBarIsVisible="True">
+             x:DataType="viewmodels:AgendarExameViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
 
-    <Grid RowDefinitions="Auto, *" BackgroundColor="#F0F2F5">
+    <Grid RowDefinitions="Auto, *, Auto">
 
-        <Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 20,20,0,0" BackgroundColor="White" Margin="10,20,10,0" Padding="25">
-            <VerticalStackLayout Spacing="25" VerticalOptions="Start">
-                <Label Text="Escolha o tipo de exame"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="Black"
-                       HorizontalTextAlignment="Center" />
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+            <Grid ColumnDefinitions="Auto, *">
+                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Text="Agendar Exame" TextColor="White" FontSize="22" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+            </Grid>
+        </Grid>
 
-                <Border Stroke="#CCCCCC" StrokeThickness="1" StrokeShape="RoundRectangle 25" HeightRequest="55">
-                    <Picker ItemsSource="{Binding TiposDeExame}"
-                            SelectedItem="{Binding TipoExameSelecionado}"
-                            ItemDisplayBinding="{Binding Nome}"
-                            TextColor="Black"
-                            Margin="15,0"/>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="30,40" Spacing="25">
+                <Label Text="Escolha o tipo de exame" TextColor="Black" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center"/>
+
+                <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="#E3E9FF" HeightRequest="55" Padding="15,0">
+                    <Picker Title="Selecione..." TitleColor="#8EA6CC" TextColor="#0098DA" ItemsSource="{Binding GruposExame}" SelectedItem="{Binding GrupoSelecionado}" VerticalOptions="Center" FontAttributes="Bold"/>
                 </Border>
 
-                <Button Text="Ver exames disponíveis"
-                        Command="{Binding VerExamesEspecificosCommand}"
-                        BackgroundColor="#0098da"
-                        TextColor="White"
-                        CornerRadius="25"
-                        HeightRequest="55" />
-
+                <Button Text="Ver exames disponíveis" Command="{Binding VerExamesDisponiveisCommand}" BackgroundColor="#0098DA" TextColor="White" FontAttributes="Bold" CornerRadius="25" HeightRequest="55" Margin="0,10,0,0"/>
             </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <ImageButton Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center" Command="{Binding HomeCommand}"/>
+                <ImageButton Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center" Command="{Binding ChatCommand}"/>
+                <ImageButton Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center" Command="{Binding ProfileCommand}"/>
+                <ImageButton Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center" Command="{Binding CalendarCommand}"/>
+            </Grid>
         </Border>
+
     </Grid>
 </ContentPage>

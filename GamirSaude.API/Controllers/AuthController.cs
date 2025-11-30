@@ -1,83 +1,50 @@
-﻿using BCrypt.Net;
-using GamirSaude.Application.DTOs;
+﻿using GamirSaude.Application.DTOs;
+using GamirSaude.Application.Services; // <--- IMPORTANTE PARA ITokenService
 using GamirSaude.Domain.Entities;
-using GamirSaude.Domain.Interfaces;
 using GamirSaude.Infrastructure.Persistence;
-using GamirSaude.Infrastructure.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using BCrypt.Net;
+
 namespace GamirSaude.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IPacienteRepository _pacienteRepository;
         private readonly GamirSaudeDbContext _context;
-        private readonly IEmailService _emailService;
-        public AuthController(IPacienteRepository pacienteRepository, GamirSaudeDbContext context, IEmailService emailService)
+        private readonly ITokenService _tokenService; // <--- CAMPO QUE FALTAVA (Erro CS0103)
+
+        // Construtor com Injeção de Dependência
+        public AuthController(GamirSaudeDbContext context, ITokenService tokenService)
         {
-            _pacienteRepository = pacienteRepository;
             _context = context;
-            _emailService = emailService;
-        }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest)
-        {
-            // ALTERAÇÃO: Agora buscamos na tabela de usuários do App
-            var usuarioApp = await _context.UsuariosApp
-        .FirstOrDefaultAsync(u => u.CpfUserApp == loginRequest.Cpf);
-            // ALTERAÇÃO: Verificamos o hash da senha
-            if (usuarioApp == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Senha, usuarioApp.SenhaUserApp))
-            {
-                return Unauthorized(new { message = "CPF ou senha inválidos." });
-            }
-
-            // Se o login for bem-sucedido...
-            return Ok(new
-            {
-                message = "Login bem-sucedido!",
-                usuario = new // Retornamos dados do usuário do app
-                {
-                    usuarioApp.IdUserApp,
-                    usuarioApp.NomeUserApp,
-                    usuarioApp.EmailUserApp,
-                    usuarioApp.ContaVerificada,
-                    usuarioApp.idPacienteGamir
-                }
-            });
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            if (await _context.UsuariosApp.AnyAsync(u => u.CpfUserApp == request.Cpf))
-            {
-                return Conflict(new { message = "Este CPF já está em uso." });
-            }
+            var cpfLimpo = request.Cpf.Replace(".", "").Replace("-", "").Trim();
 
-            if (await _context.UsuariosApp.AnyAsync(u => u.EmailUserApp == request.Email))
-            {
-                return Conflict(new { message = "Este e-mail já está em uso." });
-            }
+            if (await _context.UsuariosApp.AnyAsync(u => u.Cpf == cpfLimpo))
+                return BadRequest("Este CPF já está cadastrado.");
 
-            // ALTERAÇÃO: Criamos o hash da senha
-            var senhaHasheada = BCrypt.Net.BCrypt.HashPassword(request.Senha);
+            if (await _context.UsuariosApp.AnyAsync(u => u.Email == request.Email))
+                return BadRequest("Este E-mail já está cadastrado.");
 
-            var novoUsuario = new Cad_UsuarioApp
+            string senhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha);
+
+            var novoUsuario = new UsuarioApp
             {
-                CpfUserApp = new string(request.Cpf?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>()),
-                NomeUserApp = request.Nome,
-                EmailUserApp = request.Email,
-                SenhaUserApp = senhaHasheada, // <-- Usamos o hash
-                TelUserApp = request.Telefone,
-                DataNascUserApp = request.DataNascimento, // <-- CAMPO NOVO
-                SexoUserApp = !string.IsNullOrEmpty(request.Sexo) ? request.Sexo.Substring(0, 1) : null,
-                ContaVerificada = false,
-                idPacienteGamir = null
+                Nome = request.Nome,
+                Cpf = cpfLimpo,
+                Email = request.Email,
+                Telefone = request.Telefone,
+                DataNascimento = request.DataNascimento,
+                Sexo = request.Sexo?.Substring(0, 1),
+                SenhaHash = senhaHash,
+                ContaVerificada = false
             };
 
             _context.UsuariosApp.Add(novoUsuario);
@@ -85,263 +52,160 @@ namespace GamirSaude.API.Controllers
 
             return Ok(new { message = "Usuário cadastrado com sucesso!" });
         }
-        [HttpPost("send-verification-code")]
-        public async Task<IActionResult> SendVerificationCode([FromBody] SendCodeRequestDto request)
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // 1. Encontrar o usuário pelo e-mail
-            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.EmailUserApp == request.Email);
-            if (usuario == null)
+            var cpfLimpo = request.Cpf.Replace(".", "").Replace("-", "").Trim();
+
+            var usuario = await _context.UsuariosApp
+                .FirstOrDefaultAsync(u => u.Cpf == cpfLimpo);
+
+            if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
             {
-                // Resposta ambígua por segurança: não revela se o e-mail existe
-                return Ok(new { message = "Se o e-mail estiver cadastrado, o código será enviado." });
+                return Unauthorized("CPF ou Senha inválidos.");
             }
 
-            // 2. Verificar se a conta já está verificada
-            if (usuario.ContaVerificada)
+            // Gera o Token usando o serviço injetado
+            string token = _tokenService.GenerateToken(usuario);
+
+            // CORREÇÃO DO ERRO CS0128: Garantimos que a variável response é única
+            var loginResponse = new LoginResponse
             {
-                return BadRequest(new { message = "Esta conta já foi verificada." });
-            }
+                Id = usuario.Id,
+                Nome = usuario.Nome,
+                Email = usuario.Email,
+                ContaVerificada = usuario.ContaVerificada,
+                FotoPerfil = usuario.FotoPerfilBase64,
+                Token = token
+            };
 
-            // 3. Gerar o código e a data de expiração
-            var codigo = new Random().Next(100000, 999999).ToString("D6");
-            var dataExpiracao = DateTime.UtcNow.AddMinutes(15);
+            return Ok(loginResponse);
+        }
 
-            // 4. Salvar no banco de dados
+        // 1. PEDIR VERIFICAÇÃO (CPF + Celular)
+        [HttpPost("request-verification")]
+        public async Task<IActionResult> RequestVerification([FromBody] RequestVerificationRequest request)
+        {
+            // Limpa máscara do CPF vindo do App
+            var cpfLimpo = request.Cpf.Replace(".", "").Replace("-", "").Trim();
+
+            // A. Busca o usuário pelo CPF
+            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.Cpf == cpfLimpo);
+
+            // Regra de Segurança: Mesmo se não achar, não devemos dar dicas. 
+            // Mas para desenvolvimento, vamos retornar o erro claro.
+            if (usuario == null) return NotFound("Usuário não encontrado com este CPF.");
+
+            if (usuario.ContaVerificada) return BadRequest("Esta conta já está verificada.");
+
+            // B. Atualiza o telefone (caso o usuário tenha informado um diferente no cadastro)
+            // Isso garante que o SMS vá para o número que ele está com a mão agora.
+            usuario.Telefone = request.Celular;
+
+            // C. Gera o Código (Simulação do retorno da API SMGH)
+            var codigo = new Random().Next(100000, 999999).ToString();
+
+            // D. Salva no banco
             usuario.CodigoVerificacao = codigo;
-            usuario.DataExpiracaoCodigo = dataExpiracao;
+            usuario.DataExpiracaoCodigo = DateTime.Now.AddMinutes(10); // SMS geralmente expira mais rápido
+
+            _context.UsuariosApp.Update(usuario);
             await _context.SaveChangesAsync();
 
-            // 5. CHAMAR O SERVIÇO DE E-MAIL REAL
-            var emailSent = await _emailService.SendVerificationCodeAsync(
-                usuario.EmailUserApp,
-                usuario.NomeUserApp,
-                codigo
-            );
+            // E. MOCK: Simula envio de SMS (Aqui entraria a chamada da API SMGH)
+            Console.WriteLine($"[SMS MOCK] Enviando código {codigo} para {request.Celular}");
 
-            if (!emailSent)
-            {
-                // Log de falha de e-mail aqui (mas ainda retorna OK para o usuário por segurança)
-            }
-
-            // 6. REMOVER O CÓDIGO DE TESTE DA RESPOSTA. Retorna uma mensagem de sucesso simples.
-            return Ok(new
-            {
-                message = "O código de verificação foi enviado para o seu e-mail.",
-                // REMOVIDO: verificationCodeForTesting = codigo 
-            });
+            // Retorna o código no corpo SÓ PARA TESTE (Remova em produção!)
+            return Ok(new { message = "Código SMS enviado!", debug_codigo = codigo });
         }
 
-        [HttpPost("verify-account")]
-        public async Task<IActionResult> VerifyAccount([FromBody] VerifyCodeRequestDto request)
+        // 2. CONFIRMAR CÓDIGO (CPF + Código)
+        [HttpPost("confirm-verification")]
+        public async Task<IActionResult> ConfirmVerification([FromBody] ConfirmVerificationRequest request)
         {
-            // 1. Encontrar o usuário do app pelo e-mail
-            var usuarioApp = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.EmailUserApp == request.Email);
+            var cpfLimpo = request.Cpf.Replace(".", "").Replace("-", "").Trim();
 
-            if (usuarioApp == null)
-            {
-                return BadRequest(new { message = "Usuário não encontrado." });
-            }
+            // A. Busca o usuário pelo CPF
+            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.Cpf == cpfLimpo);
+            if (usuario == null) return NotFound("Usuário não encontrado.");
 
-            // 2. Realizar as validações de segurança (Assumindo que você corrigiu a lógica de validação)
-            if (usuarioApp.ContaVerificada || usuarioApp.CodigoVerificacao != request.Codigo || usuarioApp.DataExpiracaoCodigo < DateTime.UtcNow)
-            {
-                return BadRequest(new { message = "Falha na verificação. O código pode ser inválido, expirado ou a conta já está verificada." });
-            }
+            // B. Valida o Código
+            if (usuario.CodigoVerificacao != request.Codigo)
+                return BadRequest("Código inválido.");
 
-            // 3. O passo crucial: Encontrar o paciente no sistema legado
-            var pacienteLegado = await _context.Pacientes.FirstOrDefaultAsync(p => p.Email == request.Email);
+            if (usuario.DataExpiracaoCodigo < DateTime.Now)
+                return BadRequest("Código expirado. Solicite um novo.");
 
-            if (pacienteLegado == null)
-            {
-                return NotFound(new { message = "Não foi possível encontrar um registro de paciente correspondente." });
-            }
+            // C. SUCESSO: Simula vínculo com legado e libera
+            usuario.ContaVerificada = true;
+            usuario.IdPacienteLegado = 88922; // Mock do ID legado
 
-            // --- PASSO CRÍTICO: GARANTIR O REGISTRO DO PLANO PARTICULAR (ID 33) ---
-            const int ID_PLANO_CONVENIO_PARTICULAR = 33;
-
-            // Verifica se o paciente já tem o plano particular (33)
-            bool planoExiste = await _context.Cad_PacientePlano.AnyAsync(pp =>
-                pp.idPaciente == pacienteLegado.IdPaciente &&
-                pp.idPlanoConvenio == ID_PLANO_CONVENIO_PARTICULAR);
-
-            if (!planoExiste)
-            {
-                // Se não existir, insere o registro mínimo na Cad_PacientePlano
-                var novoPlanoPadrao = new Cad_PacientePlano
-                {
-                    idPaciente = pacienteLegado.IdPaciente,
-                    idPlanoConvenio = ID_PLANO_CONVENIO_PARTICULAR,
-                    // Colunas obrigatórias com valores padrão para o App
-                    DataAtivacaoPlano = DateTime.Now,
-                    Titular = true,
-                    Desativado = false
-                };
-
-                _context.Cad_PacientePlano.Add(novoPlanoPadrao);
-            }
-            // --- FIM DO PASSO CRÍTICO ---
-
-
-            // 4. Se todas as validações passaram, atualizamos o usuário do app
-            usuarioApp.ContaVerificada = true;
-            usuarioApp.idPacienteGamir = pacienteLegado.IdPaciente; // A ponte foi criada!
-
-            // 5. Limpar os dados de verificação por segurança
-            usuarioApp.CodigoVerificacao = null;
-            usuarioApp.DataExpiracaoCodigo = null;
-
-            // Salva todas as alterações (Cad_PacientePlano e Cad_UsuarioApp)
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = "Conta verificada com sucesso!",
-                usuario = new // Retorna os dados atualizados
-                {
-                    usuarioApp.IdUserApp,
-                    usuarioApp.NomeUserApp,
-                    usuarioApp.EmailUserApp,
-                    usuarioApp.ContaVerificada, // Será true
-                    usuarioApp.idPacienteGamir // O ID crucial
-                }
-            });
-        }
-
-        // -----------------------------------------------------------
-        // ENDPOINT NOVO: BUSCAR PERFIL DO USUÁRIO
-        // -----------------------------------------------------------
-        [HttpGet("profile/{idUserApp}")]
-        public async Task<IActionResult> GetUserProfile(int idUserApp)
-        {
-            if (idUserApp <= 0)
-            {
-                return BadRequest("ID de usuário inválido.");
-            }
-
-            try
-            {
-                // Busca o usuário na tabela Cad_UsuarioApp pelo ID
-                var usuario = await _context.UsuariosApp
-                                        .AsNoTracking() // Otimização para consulta de leitura
-                                        .FirstOrDefaultAsync(u => u.IdUserApp == idUserApp);
-
-                if (usuario == null)
-                {
-                    return NotFound(new { message = "Usuário não encontrado." });
-                }
-
-                // Mapeia a entidade para o DTO de resposta
-                var profileDto = new UserProfileDto
-                {
-                    IdUserApp = usuario.IdUserApp,
-                    CpfUsuario = usuario.CpfUserApp, // Envia sem máscara
-                    NomeUsuario = usuario.NomeUserApp,
-                    TelefoneUsuario = usuario.TelUserApp, // Envia sem máscara
-                    EmailUsuario = usuario.EmailUserApp,
-                    DataNascimentoUsuario = usuario.DataNascUserApp,
-                    SexoUsuario = usuario.SexoUserApp, // 'M' ou 'F'
-                    ContaVerificada = usuario.ContaVerificada,
-                    IdPacienteGamir = usuario.idPacienteGamir
-                };
-
-                return Ok(profileDto);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ERRO AO BUSCAR PERFIL: {ex.ToString()}");
-                return StatusCode(500, new { message = "Falha ao buscar dados do perfil." });
-            }
-        }
-
-// -----------------------------------------------------------
-        // ENDPOINTS DE RECUPERAÇÃO DE SENHA (ATUALIZADOS)
-        // -----------------------------------------------------------
-
-        /// <summary>
-        /// Endpoint 1: Usuário informa o e-mail que esqueceu a senha.
-        /// </summary>
-        [HttpPost("esqueci-senha")]
-        public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto request)
-        {
-            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.EmailUserApp == request.Email);
-
-            // --- ALTERAÇÃO AQUI ---
-            // Validação explícita solicitada pelo usuário.
-            if (usuario == null)
-            {
-                Debug.WriteLine($"Solicitação de redefinição para e-mail inexistente: {request.Email}");
-                // Retorna 404 Not Found com a mensagem de erro específica.
-                return NotFound(new { message = "Por favor verificar o e-mail digitado, não encontramos esse e-mail em nosso sistema" });
-            }
-
-            try
-            {
-                // Gerar código e expiração
-                var codigo = new Random().Next(100000, 999999).ToString("D6");
-                var dataExpiracao = DateTime.UtcNow.AddMinutes(15); // 15 minutos de validade
-
-                // Salvar no banco
-                usuario.CodigoVerificacao = codigo;
-                usuario.DataExpiracaoCodigo = dataExpiracao;
-                await _context.SaveChangesAsync();
-
-                // Enviar e-mail
-                var emailSent = await _emailService.SendPasswordResetCodeAsync(
-                    usuario.EmailUserApp,
-                    usuario.NomeUserApp,
-                    codigo
-                );
-
-                if (!emailSent)
-                {
-                    Debug.WriteLine($"Falha no serviço de e-mail ao tentar enviar código de redefinição para {request.Email}.");
-                    // Não informa o usuário da falha do e-mail, apenas loga.
-                }
-
-                // Se o e-mail existiu e o código foi gerado, retorna 200 OK.
-                return Ok(new { message = "Um código de redefinição foi enviado para o seu e-mail." });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Erro inesperado em [esqueci-senha]: {ex.Message}");
-                return StatusCode(500, new { message = "Ocorreu um erro interno no servidor." });
-            }
-        }
-
-        /// <summary>
-        /// Endpoint 2: Usuário envia o código e a nova senha.
-        /// </summary>
-        [HttpPost("redefinir-senha")]
-        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto request)
-        {
-            // 1. Encontrar o usuário
-            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.EmailUserApp == request.Email);
-
-            if (usuario == null)
-            {
-                // Não encontramos o usuário
-                return BadRequest(new { message = "O código de redefinição é inválido ou expirou." });
-            }
-
-            // 2. Validar o código e a expiração
-            if (usuario.CodigoVerificacao != request.Codigo || usuario.DataExpiracaoCodigo < DateTime.UtcNow)
-            {
-                // Código errado ou expirado
-                return BadRequest(new { message = "O código de redefinição é inválido ou expirou." });
-            }
-
-            // 3. Tudo válido! Atualizar a senha
-            var novaSenhaHasheada = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
-            usuario.SenhaUserApp = novaSenhaHasheada;
-
-            // 4. Limpar os dados de verificação
+            // Limpeza
             usuario.CodigoVerificacao = null;
             usuario.DataExpiracaoCodigo = null;
 
+            _context.UsuariosApp.Update(usuario);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Senha redefinida com sucesso!" });
+            // D. Gera novo token atualizado
+            var novoToken = _tokenService.GenerateToken(usuario);
+
+            return Ok(new
+            {
+                message = "Celular verificado com sucesso!",
+                contaVerificada = true,
+                token = novoToken
+            });
+        }
+
+        // ============================================================
+        // MÉTODOS DE PERFIL (FALTAVAM ESTES!)
+        // ============================================================
+
+        [HttpGet("profile/{id}")]
+        public async Task<IActionResult> GetProfile(int id)
+        {
+            var usuario = await _context.UsuariosApp.FindAsync(id);
+
+            if (usuario == null) return NotFound("Usuário não encontrado.");
+
+            var perfil = new UserProfileDto
+            {
+                Id = usuario.Id,
+                Nome = usuario.Nome,
+                Cpf = usuario.Cpf, // Já está limpo no banco
+                Email = usuario.Email,
+                Telefone = usuario.Telefone,
+                Sexo = usuario.Sexo,
+                DataNascimento = usuario.DataNascimento,
+                FotoPerfil = usuario.FotoPerfilBase64,
+                ContaVerificada = usuario.ContaVerificada
+            };
+
+            return Ok(perfil);
+        }
+
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            var usuario = await _context.UsuariosApp.FindAsync(request.IdUserApp);
+
+            if (usuario == null) return NotFound("Usuário não encontrado.");
+
+            // Atualiza apenas o permitido
+            usuario.Telefone = request.Telefone;
+
+            // Se enviou foto nova, atualiza. Se enviou string vazia/null, ignora (ou limpa, dependendo da regra)
+            if (!string.IsNullOrEmpty(request.FotoPerfil))
+            {
+                usuario.FotoPerfilBase64 = request.FotoPerfil;
+            }
+
+            _context.UsuariosApp.Update(usuario);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Perfil atualizado com sucesso!" });
         }
     }
-}    
- 
+}

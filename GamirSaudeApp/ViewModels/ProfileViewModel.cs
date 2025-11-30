@@ -1,144 +1,143 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GamirSaudeApp.Models; // Para UserProfile
 using GamirSaudeApp.Services;
-using System.Diagnostics;
 using GamirSaudeApp.Views;
+using GamirSaudeApp.Views.Popups;
+using System.Diagnostics;
 
 namespace GamirSaudeApp.ViewModels
 {
-    // GARANTIDO: Palavra-chave "partial"
     public partial class ProfileViewModel : BaseViewModel
     {
-        private readonly GamirApiService _apiService;
         private readonly UserDataService _userDataService;
 
-        // Propriedades observáveis para exibir na tela
-        [ObservableProperty] private string nome;
-        [ObservableProperty] private string cpf;
-        [ObservableProperty] private string email;
-        [ObservableProperty] private string telefone;
-        [ObservableProperty] private string dataNascimento;
-        [ObservableProperty] private string sexo;
-        [ObservableProperty] private bool contaVerificada;
-        [ObservableProperty] private string statusConta;
+        // --- PROPRIEDADES EXPLÍCITAS ---
 
-        public ProfileViewModel(GamirApiService apiService, UserDataService userDataService)
+        private string nomeUsuario;
+        public string NomeUsuario
         {
-            _apiService = apiService;
+            get => nomeUsuario;
+            set => SetProperty(ref nomeUsuario, value);
+        }
+
+        private ImageSource fotoUsuario;
+        public ImageSource FotoUsuario
+        {
+            get => fotoUsuario;
+            set => SetProperty(ref fotoUsuario, value);
+        }
+
+        private bool temFoto;
+        public bool TemFoto
+        {
+            get => temFoto;
+            set => SetProperty(ref temFoto, value);
+        }
+
+        private bool naoTemFoto;
+        public bool NaoTemFoto
+        {
+            get => naoTemFoto;
+            set => SetProperty(ref naoTemFoto, value);
+        }
+
+        // --- COMANDOS EXPLÍCITOS (Sem chance de erro) ---
+        public IRelayCommand OnAppearingCommand { get; } // Comando Síncrono
+        public IAsyncRelayCommand AlterarDadosCommand { get; }
+        public IAsyncRelayCommand NotificacoesCommand { get; }
+        public IAsyncRelayCommand VerificarContaCommand { get; }
+        public IAsyncRelayCommand SuporteCommand { get; }
+        public IAsyncRelayCommand LogoutCommand { get; }
+        public IAsyncRelayCommand VoltarCommand { get; }
+        public IAsyncRelayCommand HomeCommand { get; }
+        public IAsyncRelayCommand ChatCommand { get; }
+        public IAsyncRelayCommand CalendarCommand { get; }
+
+        // --- CONSTRUTOR ---
+        public ProfileViewModel(UserDataService userDataService)
+        {
             _userDataService = userDataService;
-            Debug.WriteLine("--- ProfileViewModel Construído ---");
+
+            // Inicialização Manual dos Comandos
+            OnAppearingCommand = new RelayCommand(OnAppearing);
+            AlterarDadosCommand = new AsyncRelayCommand(AlterarDados);
+            NotificacoesCommand = new AsyncRelayCommand(Notificacoes);
+            VerificarContaCommand = new AsyncRelayCommand(VerificarConta);
+            SuporteCommand = new AsyncRelayCommand(Suporte);
+            LogoutCommand = new AsyncRelayCommand(Logout);
+            VoltarCommand = new AsyncRelayCommand(Voltar);
+            HomeCommand = new AsyncRelayCommand(Home);
+            ChatCommand = new AsyncRelayCommand(Chat);
+            CalendarCommand = new AsyncRelayCommand(Calendar);
+
+            // Carga inicial (Segurança)
+            CarregarDados();
         }
 
-        // GARANTIDO: Atributo [RelayCommand]
-        [RelayCommand]
-        private async Task OnAppearing()
+        // --- LÓGICA ---
+
+        private void OnAppearing()
         {
-            Debug.WriteLine("--- ProfileViewModel OnAppearing Executado ---");
-            await LoadProfileData();
+            CarregarDados();
         }
 
-        // --- COMANDO LOGOUT (MOVIDO PARA CÁ) ---
-        [RelayCommand]
-        private async Task Logout()
+        private void CarregarDados()
         {
-            Debug.WriteLine("--- ProfileViewModel.LogoutCommand Executado ---");
-            _userDataService.ClearData();
-            await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
-        }
+            NomeUsuario = _userDataService.NomeUsuario ?? "Usuário";
 
-        // --- COMANDO VERIFICAR CONTA (MOVIDO PARA CÁ) ---
-        [RelayCommand]
-        private async Task VerificarConta()
-        {
-            Debug.WriteLine("--- ProfileViewModel.VerificarContaCommand Executado ---");
-            // Navega para a página de inserção do código
-            await Shell.Current.GoToAsync(nameof(VerifyAccountPage));
-        }
-
-        private async Task LoadProfileData()
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-            Debug.WriteLine($"Carregando perfil para IdUserApp: {_userDataService.IdUserApp}");
-
-            if (_userDataService.IdUserApp <= 0)
+            if (!string.IsNullOrEmpty(_userDataService.FotoPerfil))
             {
-                Debug.WriteLine("ERRO: IdUserApp inválido no UserDataService.");
-                await Application.Current.MainPage.DisplayAlert("Erro", "Não foi possível identificar o usuário.", "OK");
-                IsBusy = false;
-                return;
-            }
-
-            UserProfile profile = null;
-            try
-            {
-                profile = await _apiService.GetUserProfileAsync(_userDataService.IdUserApp);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"ERRO NA CHAMADA API GetUserProfile: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Erro de Rede", "Não foi possível buscar os dados do perfil.", "OK");
-            }
-
-
-            if (profile != null)
-            {
-                Debug.WriteLine($"Perfil carregado: {profile.NomeUsuario}");
-                // Atualiza as propriedades observáveis
-                Nome = profile.NomeUsuario; // <-- CORRIGIDO
-                Cpf = FormatCpf(profile.CpfUsuario);
-                Email = profile.EmailUsuario; // <-- CORRIGIDO
-                Telefone = FormatPhone(profile.TelefoneUsuario); DataNascimento = profile.DataNascimentoDisplay;
-                Sexo = profile.SexoDisplay;
-                ContaVerificada = profile.ContaVerificada;
-                StatusConta = profile.ContaVerificada ? "Verificada" : "Não Verificada";
+                try
+                {
+                    byte[] imageBytes = Convert.FromBase64String(_userDataService.FotoPerfil);
+                    FotoUsuario = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    TemFoto = true;
+                    NaoTemFoto = false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Erro ao converter foto: {ex.Message}");
+                    TemFoto = false;
+                    NaoTemFoto = true;
+                }
             }
             else
             {
-                Debug.WriteLine("API retornou perfil NULO ou ocorreu erro.");
-                // Limpar campos ou mostrar mensagem de erro adicional
-                Nome = "Erro ao carregar";
-                // ... limpar outros campos
+                TemFoto = false;
+                NaoTemFoto = true;
             }
-
-            IsBusy = false;
-            Debug.WriteLine("--- Carregamento do Perfil Finalizado ---");
         }
 
-        // --- MÉTODOS AUXILIARES DE FORMATAÇÃO ---
-        private string FormatCpf(string cpf)
+        private async Task AlterarDados() => await Shell.Current.GoToAsync(nameof(EditarPerfilPage));
+
+        private async Task Notificacoes() => await Shell.Current.DisplayAlert("Notificações", "Sem novas notificações.", "OK");
+
+        private async Task VerificarConta()
         {
-            if (string.IsNullOrWhiteSpace(cpf)) return "Não informado";
-            // Remove non-digits just in case
-            var digits = new string(cpf.Where(char.IsDigit).ToArray());
-            if (digits.Length == 11)
-            {
-                return $"{digits.Substring(0, 3)}.{digits.Substring(3, 3)}.{digits.Substring(6, 3)}-{digits.Substring(9)}";
-            }
-            return cpf; // Retorna original se não tiver 11 dígitos
+            if (_userDataService.ContaVerificada)
+                await Shell.Current.DisplayAlert("Verificado", "Sua conta já está verificada!", "OK");
+            else
+                await Shell.Current.GoToAsync(nameof(VerifyAccountPage));
         }
 
-        private string FormatPhone(string phone)
+        private async Task Suporte() => await Shell.Current.DisplayAlert("Suporte", "Contato: suporte@gamir.com.br", "OK");
+
+        private async Task Logout()
         {
-            if (string.IsNullOrWhiteSpace(phone)) return "Não informado";
-            var digits = new string(phone.Where(char.IsDigit).ToArray());
-            if (digits.Length == 11) // Celular (XX) XXXXX-XXXX
+            var popup = new LogoutPopup();
+            var resultado = await Shell.Current.ShowPopupAsync(popup);
+
+            if (resultado is bool confirmou && confirmou)
             {
-                return $"({digits.Substring(0, 2)}) {digits.Substring(2, 5)}-{digits.Substring(7)}";
+                _userDataService.LimparDados();
+                await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
             }
-            if (digits.Length == 10) // Fixo (XX) XXXX-XXXX
-            {
-                return $"({digits.Substring(0, 2)}) {digits.Substring(2, 4)}-{digits.Substring(6)}";
-            }
-            return phone; // Retorna original se não for 10 ou 11 dígitos
         }
 
-
+        private async Task Voltar() => await Shell.Current.GoToAsync("..");
+        private async Task Home() => await Shell.Current.GoToAsync("//DashboardPage");
+        private async Task Chat() { }
+        private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
     }
 }

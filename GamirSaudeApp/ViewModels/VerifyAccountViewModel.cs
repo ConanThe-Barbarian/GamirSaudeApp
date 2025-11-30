@@ -1,72 +1,111 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using GamirSaudeApp.Views;
-using System.Text;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GamirSaudeApp.Services;
+using GamirSaudeApp.Views;
 using System.Threading.Tasks;
 
 namespace GamirSaudeApp.ViewModels
 {
     public partial class VerifyAccountViewModel : BaseViewModel
     {
-        private readonly GamirApiService _apiService;
         private readonly UserDataService _userDataService;
+        private readonly GamirApiService _apiService;
 
-        [ObservableProperty]
-        private string verificationCode;
-
-        public VerifyAccountViewModel(GamirApiService apiService, UserDataService userDataService)
+        // --- PROPRIEDADES ---
+        private string codigo;
+        public string Codigo
         {
-            _apiService = apiService;
-            _userDataService = userDataService;
+            get => codigo;
+            set => SetProperty(ref codigo, value);
         }
 
-        [RelayCommand]
-        private async Task SendCode()
+        private string mensagemInfo;
+        public string MensagemInfo
         {
+            get => mensagemInfo;
+            set => SetProperty(ref mensagemInfo, value);
+        }
+
+        private bool isBusy;
+        public bool IsBusy
+        {
+            get => isBusy;
+            set => SetProperty(ref isBusy, value);
+        }
+
+        // --- COMANDOS ---
+        public IAsyncRelayCommand VerificarCodigoCommand { get; }
+        public IAsyncRelayCommand ReenviarCodigoCommand { get; }
+        public IAsyncRelayCommand VoltarCommand { get; }
+
+        public VerifyAccountViewModel(UserDataService userDataService, GamirApiService apiService)
+        {
+            _userDataService = userDataService;
+            _apiService = apiService;
+
+            VerificarCodigoCommand = new AsyncRelayCommand(VerificarCodigo);
+            ReenviarCodigoCommand = new AsyncRelayCommand(SolicitarCodigo); // Reenviar chama Solicitar
+            VoltarCommand = new AsyncRelayCommand(Voltar);
+
+            // Mensagem visual
+            string cel = _userDataService.TelefoneUsuario ?? "seu número";
+            MensagemInfo = $"Enviamos um código SMS para {cel}. Insira-o abaixo para validar.";
+
+            // Opcional: Já dispara o SMS assim que abre a tela
+            // _ = SolicitarCodigo();
+        }
+
+        private async Task SolicitarCodigo()
+        {
+            if (IsBusy) return;
             IsBusy = true;
-            var (success, message) = await _apiService.SendVerificationCodeAsync(_userDataService.EmailUsuario);
+
+            var cpf = _userDataService.CpfUsuario;
+            var celular = _userDataService.TelefoneUsuario;
+
+            // Validação de segurança
+            if (string.IsNullOrEmpty(cpf) || string.IsNullOrEmpty(celular))
+            {
+                IsBusy = false;
+                await Shell.Current.DisplayAlert("Erro", "Dados de contato não encontrados. Faça login novamente.", "OK");
+                return;
+            }
+
+            var sucesso = await _apiService.SolicitarVerificacaoAsync(cpf, celular);
+
             IsBusy = false;
 
-            await Shell.Current.DisplayAlert(success ? "Sucesso" : "Atenção", message, "OK");
+            if (sucesso)
+                await Shell.Current.DisplayAlert("SMS Enviado", $"Código enviado para {celular}", "OK");
+            else
+                await Shell.Current.DisplayAlert("Erro", "Falha ao enviar SMS.", "OK");
         }
 
-        [RelayCommand]
-        private async Task Verify()
+        private async Task VerificarCodigo()
         {
-            if (string.IsNullOrWhiteSpace(VerificationCode) || VerificationCode.Length != 6)
+            if (string.IsNullOrWhiteSpace(Codigo))
             {
-                await Shell.Current.DisplayAlert("Erro", "Por favor, insira um código válido de 6 dígitos.", "OK");
+                await Shell.Current.DisplayAlert("Erro", "Digite o código de 6 dígitos.", "OK");
                 return;
             }
 
             IsBusy = true;
-            // CORREÇÃO: Captura os 3 valores retornados pelo serviço
-            var (success, message, updatedUser) = await _apiService.VerifyAccountAsync(_userDataService.EmailUsuario, VerificationCode);
+            var cpf = _userDataService.CpfUsuario;
+            var sucesso = await _apiService.ConfirmarVerificacaoAsync(cpf, Codigo);
             IsBusy = false;
 
-            await Shell.Current.DisplayAlert(success ? "Sucesso" : "Falha na Verificação", message, "OK");
-
-
-
-            if (success && updatedUser != null) // Verifica se os dados do usuário vieram
+            if (sucesso)
             {
-                // --- SINCRONIZAÇÃO COMPLETA DO UserDataService ---
-                _userDataService.IdUserApp = updatedUser.IdUserApp;
-                _userDataService.NomeUsuario = updatedUser.NomeUserApp;
-                _userDataService.EmailUsuario = updatedUser.EmailUserApp;
-                _userDataService.ContaVerificada = updatedUser.ContaVerificada; // Deve ser true
-                _userDataService.IdPacienteGamir = updatedUser.IdPacienteGamir; // ATUALIZA O ID CRUCIAL
-
-                // --- FIM DA SINCRONIZAÇÃO ---
-
-                // Navega de volta para o Dashboard, forçando um refresh
-                await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}?refresh=true");
+                await Shell.Current.DisplayAlert("Parabéns!", "Conta verificada com sucesso.", "OK");
+                _userDataService.ContaVerificada = true;
+                await Shell.Current.GoToAsync($"//{nameof(DashboardPage)}");
+            }
+            else
+            {
+                await Shell.Current.DisplayAlert("Erro", "Código inválido ou expirado.", "OK");
             }
         }
+
+        private async Task Voltar() => await Shell.Current.GoToAsync("..");
     }
 }
