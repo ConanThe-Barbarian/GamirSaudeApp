@@ -38,13 +38,14 @@ namespace GamirSaudeApp.Services
             }
         }
 
-        
+
 
         // ==================================================================
         // 1. AUTENTICAÇÃO E PERFIL
         // ==================================================================
 
-        public async Task<LoginAppResponse> LoginAsync(string cpf, string senha)
+        // Altere de LoginAppResponse para LoginResponse
+        public async Task<LoginResponse> LoginAsync(string cpf, string senha)
         {
             try
             {
@@ -53,7 +54,8 @@ namespace GamirSaudeApp.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<LoginAppResponse>();
+                    // Agora usa o nome correto da classe unificada
+                    return await response.Content.ReadFromJsonAsync<LoginResponse>();
                 }
                 return null;
             }
@@ -63,7 +65,6 @@ namespace GamirSaudeApp.Services
                 return null;
             }
         }
-
         public async Task<(bool Success, string Message)> RegisterAsync(RegisterRequest request)
         {
             try

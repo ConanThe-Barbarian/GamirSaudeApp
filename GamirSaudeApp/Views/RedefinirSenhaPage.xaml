@@ -28,7 +28,18 @@
                    MaxLength="6"
                    IsEnabled="{Binding IsNotBusy}"/>
         </Border>
-
+        
+        <Label Text="Não recebeu? Reenviar Código"
+               TextColor="#0098da"
+               FontSize="14"
+               FontAttributes="Bold"
+               HorizontalOptions="End"
+               Margin="0,0,10,0">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ReenviarCodigoCommand}" />
+            </Label.GestureRecognizers>
+        </Label>
+        
         <Border Stroke="#DDDDDD" StrokeThickness="1" Padding="15,0" StrokeShape="RoundRectangle 25">
             <Entry Placeholder="Nova Senha"
                    Text="{Binding NovaSenha}"
@@ -57,6 +68,7 @@
                            HorizontalOptions="Center" 
                            VerticalOptions="Center"
                            Margin="0,20,0,0"/>
+        
 
     </VerticalStackLayout>
 </ContentPage>

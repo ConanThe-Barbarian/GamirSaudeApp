@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
-namespace GamirSaudeApp.Models
+namespace GamirSaude.Application.DTOs
 {
     // ============================================================
-    // AUTENTICAÇÃO
+    // AUTENTICAÇÃO (Login e Registro)
     // ============================================================
 
     public class LoginRequest
@@ -22,7 +23,7 @@ namespace GamirSaudeApp.Models
         public string Nome { get; set; }
         public string Email { get; set; }
         public bool ContaVerificada { get; set; }
-        public string FotoPerfil { get; set; }
+        public string FotoPerfil { get; set; } // Base64
         public string Token { get; set; }
     }
 
@@ -33,33 +34,12 @@ namespace GamirSaudeApp.Models
         public string Email { get; set; }
         public string Telefone { get; set; }
         public DateTime? DataNascimento { get; set; }
-        public string Sexo { get; set; }
+        public string Sexo { get; set; } // 'M' ou 'F'
         public string Senha { get; set; }
     }
 
     // ============================================================
-    // RECUPERAÇÃO DE SENHA (NOVOS)
-    // ============================================================
-
-    public class EsqueciSenhaRequest
-    {
-        public string Email { get; set; }
-    }
-
-    public class RedefinirSenhaRequest
-    {
-        public string Email { get; set; }
-        public string Codigo { get; set; }
-        public string NovaSenha { get; set; }
-    }
-
-    public class SimpleAuthResponse
-    {
-        public string Message { get; set; }
-    }
-
-    // ============================================================
-    // OUTROS (Perfil, Verificação)
+    // VERIFICAÇÃO DE CONTA (SMS/OTP)
     // ============================================================
 
     public class RequestVerificationRequest
@@ -74,7 +54,33 @@ namespace GamirSaudeApp.Models
         public string Codigo { get; set; }
     }
 
-    public class UserProfile
+    // ============================================================
+    // RECUPERAÇÃO DE SENHA (Novo Fluxo)
+    // ============================================================
+
+    public class EsqueciSenhaRequest
+    {
+        public string Email { get; set; }
+    }
+
+    public class RedefinirSenhaRequest
+    {
+        public string Email { get; set; }
+        public string Codigo { get; set; }
+        public string NovaSenha { get; set; }
+    }
+
+    // DTO genérico para respostas simples (Sucesso/Erro)
+    public class SimpleAuthResponse
+    {
+        public string Message { get; set; }
+    }
+
+    // ============================================================
+    // PERFIL DO USUÁRIO
+    // ============================================================
+
+    public class UserProfileDto
     {
         public int Id { get; set; }
         public string Nome { get; set; }
@@ -91,6 +97,6 @@ namespace GamirSaudeApp.Models
     {
         public int IdUserApp { get; set; }
         public string Telefone { get; set; }
-        public string FotoPerfil { get; set; }
+        public string FotoPerfil { get; set; } // Base64
     }
 }

@@ -85,5 +85,43 @@ namespace GamirSaudeApp.ViewModels
                 IsBusy = false;
             }
         }
+
+        // ADICIONE ESTE NOVO COMANDO
+        [RelayCommand]
+        private async Task ReenviarCodigo()
+        {
+            if (IsBusy) return;
+
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                await Shell.Current.DisplayAlert("Erro", "E-mail não identificado.", "OK");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                // Reutilizamos o método que pede o código (o mesmo da tela anterior)
+                var (success, message) = await _apiService.EsqueciSenhaAsync(Email);
+
+                if (success)
+                {
+                    await Shell.Current.DisplayAlert("Código Reenviado", $"Um novo código foi enviado para {Email}.", "OK");
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Erro", message, "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao reenviar código: {ex.Message}");
+                await Shell.Current.DisplayAlert("Erro", "Falha ao conectar ao servidor.", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
     }
 }

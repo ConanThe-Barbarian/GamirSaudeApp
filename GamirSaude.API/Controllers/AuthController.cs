@@ -207,5 +207,83 @@ namespace GamirSaude.API.Controllers
 
             return Ok(new { message = "Perfil atualizado com sucesso!" });
         }
+
+        // ============================================================
+        // 3. RECUPERAÇÃO DE SENHA (NOVO)
+        // ============================================================
+
+        [HttpPost("esqueci-senha")]
+        public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequest request)
+        {
+            // 1. Validação básica
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest(new SimpleAuthResponse { Message = "O e-mail é obrigatório." });
+
+            // 2. Busca o usuário no BANCO DO APP
+            // Importante: Usamos o banco local, pois é lá que o email e senha hashada vivem.
+            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (usuario == null)
+            {
+                // Retornamos 404 com mensagem clara para o App exibir
+                return NotFound(new SimpleAuthResponse { Message = "E-mail não encontrado." });
+            }
+
+            // 3. Gera o Código (Simulação de 6 dígitos)
+            var codigo = new Random().Next(100000, 999999).ToString();
+
+            // 4. Salva no banco para validar depois
+            usuario.CodigoVerificacao = codigo;
+            usuario.DataExpiracaoCodigo = DateTime.Now.AddMinutes(15); // Validade de 15 min
+
+            _context.UsuariosApp.Update(usuario);
+            await _context.SaveChangesAsync();
+
+            // 5. LOG (Simula o envio de e-mail no CONSOLE da API)
+            // ATENÇÃO: Quando testar, olhe o terminal preto da API para ver este código!
+            Console.WriteLine($"\n[EMAIL MOCK] -------------------------------------------------");
+            Console.WriteLine($"[EMAIL MOCK] Recuperação de Senha para: {request.Email}");
+            Console.WriteLine($"[EMAIL MOCK] CÓDIGO: {codigo}");
+            Console.WriteLine($"[EMAIL MOCK] -------------------------------------------------\n");
+
+            return Ok(new SimpleAuthResponse { Message = "Código de verificação enviado para o seu e-mail." });
+        }
+
+        [HttpPost("redefinir-senha")]
+        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequest request)
+        {
+            // 1. Validações
+            if (string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Codigo) ||
+                string.IsNullOrWhiteSpace(request.NovaSenha))
+            {
+                return BadRequest(new SimpleAuthResponse { Message = "Preencha todos os campos." });
+            }
+
+            // 2. Busca usuário
+            var usuario = await _context.UsuariosApp.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (usuario == null) return NotFound(new SimpleAuthResponse { Message = "Usuário não encontrado." });
+
+            // 3. Verifica o Código e a Validade
+            if (usuario.CodigoVerificacao != request.Codigo)
+                return BadRequest(new SimpleAuthResponse { Message = "Código inválido." });
+
+            if (usuario.DataExpiracaoCodigo < DateTime.Now)
+                return BadRequest(new SimpleAuthResponse { Message = "O código expirou. Solicite um novo." });
+
+            // 4. Atualiza a senha (HASHING COM BCRYPT É OBRIGATÓRIO)
+            // Isso garante que a senha salva seja criptografada igual ao registro
+            string novaSenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+            usuario.SenhaHash = novaSenhaHash;
+
+            // 5. Limpa o código usado (Segurança para não reutilizar)
+            usuario.CodigoVerificacao = null;
+            usuario.DataExpiracaoCodigo = null;
+
+            _context.UsuariosApp.Update(usuario);
+            await _context.SaveChangesAsync();
+
+            return Ok(new SimpleAuthResponse { Message = "Senha redefinida com sucesso! Faça login com a nova senha." });
+        }
     }
 }
