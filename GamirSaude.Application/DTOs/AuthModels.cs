@@ -22,6 +22,7 @@ namespace GamirSaude.Application.DTOs
         public int Id { get; set; }
         public string Nome { get; set; }
         public string Email { get; set; }
+        public string Telefone { get; set; }
         public bool ContaVerificada { get; set; }
         public string FotoPerfil { get; set; } // Base64
         public string Token { get; set; }

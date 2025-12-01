@@ -141,9 +141,6 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 
 
 	<ItemGroup>
-	  <Compile Update="Views\AgendamentoSucessoPage.xaml.cs">
-	    <DependentUpon>AgendamentoSucessoPage.xaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="Views\MedicoCalendarioPage.xaml.cs">
 	    <DependentUpon>MedicoCalendarioPage.xaml</DependentUpon>
 	  </Compile>
@@ -177,8 +174,6 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 			 
 		</MauiXaml><MauiXaml Update="Views\MedicoCalendarioPage.xaml">
   <Generator>MSBuild:Compile</Generator>
-</MauiXaml><MauiXaml Update="Views\AgendamentoSucessoPage.xaml">
-  <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\MedicosExameListaPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\ExameCalendarioPage.xaml">
@@ -186,6 +181,10 @@ either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 </MauiXaml><MauiXaml Update="Views\MedicosListaPage.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\MeusLaudosPage.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\Popups\AgendamentoSucessoPopup.xaml">
+  <Generator>MSBuild:Compile</Generator>
+</MauiXaml><MauiXaml Update="Views\Popups\ConfirmacaoAgendamentoPopup.xaml">
   <Generator>MSBuild:Compile</Generator>
 </MauiXaml><MauiXaml Update="Views\Popups\LogoutPopup.xaml">
   <Generator>MSBuild:Compile</Generator>

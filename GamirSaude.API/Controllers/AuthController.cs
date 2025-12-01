@@ -75,6 +75,7 @@ namespace GamirSaude.API.Controllers
                 Id = usuario.Id,
                 Nome = usuario.Nome,
                 Email = usuario.Email,
+                Telefone = usuario.Telefone,
                 ContaVerificada = usuario.ContaVerificada,
                 FotoPerfil = usuario.FotoPerfilBase64,
                 Token = token

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="GamirSaudeApp.Views.Popups.AgendamentoSucessoPopup"
+               Color="Transparent">
+
+    <Border StrokeThickness="0"
+            StrokeShape="RoundRectangle 25"
+            BackgroundColor="White"
+            WidthRequest="300"
+            Padding="30">
+
+        <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+
+            <Image Source="success_checkmark.gif"
+                   IsAnimationPlaying="True"
+                   HeightRequest="100"
+                   WidthRequest="100"
+                   HorizontalOptions="Center"/>
+
+            <Label Text="Agendado!"
+                   TextColor="#0098da"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"/>
+
+            <Label Text="Sua consulta foi confirmada com sucesso."
+                   TextColor="#666666"
+                   FontSize="16"
+                   HorizontalTextAlignment="Center"/>
+
+            <Button Text="Voltar ao Início"
+                    Clicked="OnOkClicked"
+                    BackgroundColor="#0098da"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="25"
+                    HeightRequest="50"
+                    Margin="0,10,0,0"/>
+
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>

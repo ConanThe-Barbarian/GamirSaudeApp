@@ -62,6 +62,7 @@ namespace GamirSaudeApp.ViewModels
                 _userDataService.IdUserApp = response.Id;
                 _userDataService.NomeUsuario = response.Nome;
                 _userDataService.EmailUsuario = response.Email;
+                _userDataService.TelefoneUsuario = response.Telefone;
                 _userDataService.ContaVerificada = response.ContaVerificada;
                 _userDataService.CpfUsuario = Cpf;
 

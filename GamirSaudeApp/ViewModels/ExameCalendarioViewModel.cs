@@ -129,11 +129,12 @@ namespace GamirSaudeApp.ViewModels
             {
                 var request = new DiasDisponiveisRequest
                 {
-                    IdMedico = 89, // Mock
+                    IdMedico = 89,
                     Mes = MesCorrente.Month,
                     Ano = MesCorrente.Year,
-                    IdProcedimento = IdProcedimento
+                    IdProcedimento = IdProcedimento // <--- Agora existe (nullable)
                 };
+
                 var diasResult = await _gamirApiService.GetDiasDisponiveisExameAsync(request);
                 listaDiasApi = diasResult?.ToList();
             }
@@ -164,12 +165,18 @@ namespace GamirSaudeApp.ViewModels
                 for (int dia = 1; dia <= diasNoMes; dia++)
                 {
                     var data = new DateTime(MesCorrente.Year, MesCorrente.Month, dia);
-                    var apiData = diasApi?.FirstOrDefault(d => d.Dia == dia);
+
+                    // CORREÇÃO: Comparar Data.Day
+                    var apiData = diasApi?.FirstOrDefault(d => d.Data.Day == dia);
+
+                    // CORREÇÃO: Mapear bool -> string
+                    string status = (apiData != null && apiData.Disponivel) ? "Disponivel" : "Indisponivel";
+
                     DiasDoMes.Add(new CalendarDay
                     {
                         Date = data,
                         IsEmpty = false,
-                        Status = apiData?.Status ?? "Indisponivel",
+                        Status = status,
                         IsSelected = false
                     });
                 }
@@ -190,7 +197,14 @@ namespace GamirSaudeApp.ViewModels
             ShowAgendarButton = false;
             HorarioSelecionado = null;
 
-            var request = new HorariosDisponiveisRequest { IdMedico = 89, Data = dia.Date, IdProcedimento = IdProcedimento };
+            // Adicione IdProcedimento ao request
+            var request = new HorariosDisponiveisRequest
+            {
+                IdMedico = 89,
+                Data = dia.Date,
+                IdProcedimento = IdProcedimento
+            };
+            
             var lista = await _gamirApiService.GetHorariosDisponiveisExameAsync(request);
 
             if (lista != null)
@@ -224,15 +238,18 @@ namespace GamirSaudeApp.ViewModels
                 var horaSpan = TimeSpan.Parse(HorarioSelecionado.Hora, CultureInfo.InvariantCulture);
                 var dataHora = _diaSelecionado.Date.Date.Add(horaSpan);
 
+                // CORREÇÃO: Usando os nomes da Unified DTO
                 var request = new AgendamentoRequest
                 {
-                    IdPaciente = _userDataService.IdPaciente,
-                    IdPrestadorMedico = 89, // Mock
-                    DataHoraMarcada = dataHora,
+                    IdPacienteLegado = 88922, // Use IdPacienteLegado (pode pegar do _userDataService se tiver)
+                    IdMedico = 89,            // Antes era IdPrestadorMedico
+                    DataHorario = dataHora,   // Antes era DataHoraMarcada
                     IdProcedimento = IdProcedimento,
-                    Minutos = 30
+                    Minutos = 30,
+                    Observacao = "Agendamento de Exame via App"
                 };
 
+                
                 bool ok = await Shell.Current.DisplayAlert("Confirmar",
                     $"Agendar {ExameNome}\nCom: {MedicoNome}\nEm: {_diaSelecionado.Date:dd/MM} às {HorarioSelecionado.Hora}\nValor: {ValorExame}?",
                     "Sim", "Não");

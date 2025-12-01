@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="GamirSaudeApp.Views.Popups.ConfirmacaoAgendamentoPopup"
+               Color="Transparent">
+
+    <Border StrokeThickness="0"
+            StrokeShape="RoundRectangle 25"
+            BackgroundColor="White"
+            WidthRequest="320"
+            Padding="0">
+
+        <Grid RowDefinitions="Auto, Auto, Auto" Padding="25">
+
+            <VerticalStackLayout Grid.Row="0" Spacing="10" HorizontalOptions="Center">
+                <Image Source="calendar_icon.png" 
+                       Aspect="AspectFit"
+                       HeightRequest="50" 
+                       WidthRequest="50"
+                       HorizontalOptions="Center"/>
+
+                <Label Text="Confirmar Agendamento?"
+                       TextColor="#0098da"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <Label Grid.Row="1"
+                   x:Name="lblDetalhes"
+                   Text="Detalhes da consulta aqui..."
+                   TextColor="#555555"
+                   FontSize="15"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,20,0,25"/>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="15">
+
+                <Button Grid.Column="0"
+                        Text="Não"
+                        Clicked="OnCancelarClicked"
+                        BackgroundColor="#F5F5F5"
+                        TextColor="#666666"
+                        FontAttributes="Bold"
+                        CornerRadius="20"
+                        HeightRequest="45"/>
+
+                <Button Grid.Column="1"
+                        Text="Sim, Agendar"
+                        Clicked="OnConfirmarClicked"
+                        BackgroundColor="#0098da"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="20"
+                        HeightRequest="45"/>
+            </Grid>
+        </Grid>
+    </Border>
+</toolkit:Popup>
