@@ -66,4 +66,16 @@ namespace GamirSaude.Application.DTOs
         public string Observacao { get; set; }
         public int? Minutos { get; set; }
     }
+
+    public class AgendamentoHistoricoDto
+    {
+        public int Id { get; set; }
+        public string NomePrestador { get; set; }
+        public string Especialidade { get; set; }
+        public string Procedimento { get; set; }
+        public DateTime DataHoraMarcada { get; set; }
+        public decimal Valor { get; set; }
+        public string Status { get; set; } // "Agendado", "Realizado", "Cancelado"
+        public bool Desativado { get; set; } // Define se vai para aba "Fechados"
+    }
 }

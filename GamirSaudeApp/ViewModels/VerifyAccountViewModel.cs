@@ -106,6 +106,6 @@ namespace GamirSaudeApp.ViewModels
             }
         }
 
-        private async Task Voltar() => await Shell.Current.GoToAsync("..");
+        private async Task Voltar() => await Shell.Current.GoToAsync("//ProfilePage");
     }
 }

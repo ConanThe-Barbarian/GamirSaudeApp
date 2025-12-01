@@ -32,8 +32,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<LoginViewModel>();
         builder.Services.AddSingleton<DashboardViewModel>();
         builder.Services.AddTransient<AgendarConsultaViewModel>();
-        builder.Services.AddTransient<MedicoCalendarioViewModel>();
-        builder.Services.AddTransient<SucessoAgendamentoViewModel>();
+        builder.Services.AddTransient<MedicoCalendarioViewModel>();      
         builder.Services.AddTransient<AgendarExameViewModel>();
         builder.Services.AddTransient<ExamesEspecificosViewModel>();
         builder.Services.AddTransient<RegisterViewModel>();
@@ -53,8 +52,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<LoginPage>();
         builder.Services.AddSingleton<DashboardPage>();
         builder.Services.AddTransient<AgendarConsultaPage>();
-        builder.Services.AddTransient<MedicoCalendarioPage>();
-        builder.Services.AddTransient<AgendamentoSucessoPage>();
+        builder.Services.AddTransient<MedicoCalendarioPage>();        
         builder.Services.AddTransient<AgendarExamePage>();
         builder.Services.AddTransient<ExamesEspecificosPage>();
         builder.Services.AddTransient<RegisterPage>();

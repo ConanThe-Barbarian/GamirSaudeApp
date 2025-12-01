@@ -135,7 +135,7 @@ namespace GamirSaudeApp.ViewModels
             }
         }
 
-        private async Task Voltar() => await Shell.Current.GoToAsync("..");
+        private async Task Voltar() => await Shell.Current.GoToAsync("//DashboardPage");
         private async Task Home() => await Shell.Current.GoToAsync("//DashboardPage");
         private async Task Chat() { }
         private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));

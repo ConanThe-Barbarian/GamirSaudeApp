@@ -1,0 +1,104 @@
+📘 Documentação de Progresso: Gamir Saúde App (v7.5)
+Status Geral: Módulos de Autenticação e Agendamento (Consulta/Exame) Completos e Integrados. Arquitetura: Facade Pattern (API Intermediária mockando Sistema Legado).
+
+1. Backend (GamirSaude.API) 🧠
+O Backend foi estruturado para ser o cérebro de segurança e o tradutor (Facade) para o sistema clínico.
+
+A. Autenticação (AuthController.cs)
+Novos Endpoints:
+
+POST /esqueci-senha: Gera código MOCK e salva no banco com expiração.
+
+POST /redefinir-senha: Valida código e atualiza SenhaHash (BCrypt).
+
+POST /request-verification: Simula envio de SMS (Log no Console).
+
+POST /confirm-verification: Valida código SMS e vincula o usuário ao IdPacienteLegado (88922).
+
+Ajuste no Login: Atualizado para retornar objeto completo (LoginResponse) incluindo Telefone e ContaVerificada.
+
+B. Agendamento (AgendamentoController.cs)
+Criação do Controller: Implementado 100% com dados simulados (Mocks) para não depender do legado agora.
+
+Endpoints Implementados:
+
+GET /especialidades: Retorna lista colorida com ícones.
+
+GET /medicos/{especialidade}: Retorna médicos filtrados.
+
+POST /dias-disponiveis: Lógica unificada (Exame e Consulta). Retorna dias pares como disponíveis.
+
+POST /horarios-disponiveis: Retorna lista de horários.
+
+POST /agendamento: Recebe o AgendamentoRequest, valida IDs e "confirma" a operação (Log no Console).
+
+C. DTOs (Organização)
+Limpeza: Eliminamos dezenas de arquivos pequenos.
+
+Centralização:
+
+AuthModels.cs: Tudo de Login, Registro e Perfil.
+
+AgendamentoDtos.cs: Tudo de Médicos, Dias e Requests. Adicionado suporte a IdProcedimento (Nullable) para diferenciar Exame de Consulta.
+
+2. Frontend (GamirSaudeApp) 📱
+O App foi atualizado para consumir a API real e melhorar a UX.
+
+A. Serviços (GamirApiService.cs & UserDataService.cs)
+Unificação de Rotas: Métodos de Exame e Consulta agora apontam para os mesmos endpoints na API (/api/agendamento/...).
+
+Gestão de Sessão: UserDataService agora armazena Telefone, ContaVerificada e IdPacienteLegado.
+
+Login Refinado: O método LoginAsync agora popula o serviço com todos os dados necessários para a verificação de conta.
+
+B. ViewModels (A Lógica)
+LoginViewModel: Captura e salva o telefone do usuário.
+
+EsqueciSenhaViewModel / Redefinir: Fluxo conectado à API.
+
+VerifyAccountViewModel: Fluxo de SMS conectado. Lê o telefone do usuário logado.
+
+MedicoCalendarioViewModel:
+
+Correção do erro de propriedade .Dia (agora usa .Data).
+
+Correção lógica de IsBusy e tratamento de TimeSpan.
+
+Implementação do Popup Personalizado de confirmação.
+
+Chamada real ao AgendarConsultaAsync.
+
+ExameCalendarioViewModel: Mesmo tratamento do médico, mas enviando IdProcedimento.
+
+C. UI/UX (O Visual) 🎨
+Padronização de Models: AgendamentoModels.cs criado na pasta Models para espelhar os DTOs da API.
+
+Popups Personalizados (Novo!):
+
+ConfirmacaoAgendamentoPopup: Substitui o DisplayAlert padrão. Design limpo com bordas arredondadas.
+
+AgendamentoSucessoPopup: Feedback visual com GIF animado (success_checkmark.gif) e fundo branco limpo.
+
+3. O Fluxo de Dados Atual (Resumo) 🔄
+Entrada: Usuário Loga -> API retorna Token + Telefone -> App guarda.
+
+Verificação: Usuário pede SMS -> API gera código -> Usuário digita -> API libera IdPacienteLegado.
+
+Navegação: Usuário escolhe Especialidade -> Médico -> Data -> Horário.
+
+Ação: Usuário clica em "Agendar".
+
+Confirmação: Popup Branco aparece com resumo -> Usuário confirma.
+
+Envio: App manda JSON para API (/api/agendamento).
+
+Sucesso: API loga os dados -> Retorna 200 OK -> App exibe Popup com GIF -> Redireciona para Dashboard.
+
+4. O Que Falta? (Próximos Passos Sugeridos) 🗺️
+Histórico: Criar endpoint GET /historico para listar os agendamentos realizados na tela "Meus Agendamentos".
+
+Perfil: Implementar upload de foto real (Base64) no ProfileViewModel.
+
+Refinamento: Tratamento de erros mais robusto (ex: sem internet) e validações de formulário.
+
+Estamos com a base sólida e o fluxo crítico funcionando. Podemos avançar para o Histórico ou Perfil quando quiser! 🚀

@@ -1,25 +1,22 @@
-﻿// GamirSaudeApp/ViewModels/HistoricoViewModel.cs
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GamirSaudeApp.Models; // Para AgendamentoHistorico
+using GamirSaudeApp.Models;
 using GamirSaudeApp.Services;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls; // Para DisplayAlert
-using System.Diagnostics; // Para Debug.WriteLine
-using System; // Para Exception
-using System.Collections.Generic; // Para IEnumerable
+using System.Diagnostics;
 
 namespace GamirSaudeApp.ViewModels
 {
     public partial class HistoricoViewModel : BaseViewModel
     {
+        private readonly GamirApiService _apiService;
+        private readonly UserDataService _userDataService;
+
         public ObservableCollection<AgendamentoHistorico> AgendamentosExibidos { get; } = new();
 
-        private List<AgendamentoHistorico> _todosPendentes;
-        private List<AgendamentoHistorico> _todosFechados;
+        // Listas em memória para alternar abas sem recarregar API toda hora
+        private List<AgendamentoHistorico> _todosPendentes = new();
+        private List<AgendamentoHistorico> _todosFechados = new();
 
         [ObservableProperty]
         private bool isPendentesSelected = true;
@@ -27,64 +24,59 @@ namespace GamirSaudeApp.ViewModels
         [ObservableProperty]
         private bool isFechadosSelected = false;
 
-        public HistoricoViewModel()
+        [ObservableProperty]
+        private bool isBusy;
+
+        public HistoricoViewModel(GamirApiService apiService, UserDataService userDataService)
         {
-            CarregarDadosMock();
-            MostrarPendentes();
+            _apiService = apiService;
+            _userDataService = userDataService;
+
+            // Carrega os dados ao iniciar
+            _ = CarregarHistorico();
         }
 
-        private void CarregarDadosMock()
+        private async Task CarregarHistorico()
         {
-            _todosPendentes = new List<AgendamentoHistorico>
-            {
-                // Exemplo 1: Exame
-                new AgendamentoHistorico {
-                    NomePrestador = "Dr. Oswaldo",
-                    Especialidade = "Cardiologista",
-                    Procedimento = "ECO/DOPPLER COLORIDO", // <--- Procedimento
-                    Valor = 150.00m,                       // <--- Valor
-                    DataHoraMarcada = DateTime.Now.AddDays(2),
-                    Desativado = false
-                },
-                // Exemplo 2: Consulta
-                new AgendamentoHistorico {
-                    NomePrestador = "Dra. Ana Paula",
-                    Especialidade = "Dermatologista",
-                    Procedimento = "CONSULTA MÉDICA",      // <--- Procedimento
-                    Valor = 300.00m,                       // <--- Valor
-                    DataHoraMarcada = DateTime.Now.AddDays(5),
-                    Desativado = false
-                },
-                 // Exemplo 3: Revisão (Gratis?)
-                new AgendamentoHistorico {
-                    NomePrestador = "Dr. Ricardo",
-                    Especialidade = "Ortopedista",
-                    Procedimento = "REVISÃO DE CONSULTA",  // <--- Procedimento
-                    Valor = 0.00m,                         // <--- Valor Zero
-                    DataHoraMarcada = DateTime.Now.AddDays(8),
-                    Desativado = false
-                }
-            };
+            if (IsBusy) return;
+            IsBusy = true;
 
-            _todosFechados = new List<AgendamentoHistorico>
+            try
             {
-                new AgendamentoHistorico {
-                    NomePrestador = "Dr Tomaz",
-                    Especialidade = "Cardiologista",
-                    Procedimento = "ELETROCARDIOGRAMA",
-                    Valor = 100.00m,
-                    DataHoraMarcada = DateTime.Now.AddDays(-10),
-                    Desativado = false
-                },
-                new AgendamentoHistorico {
-                    NomePrestador = "Dra Karina",
-                    Especialidade = "Ginecologista",
-                    Procedimento = "CONSULTA DE ROTINA",
-                    Valor = 250.00m,
-                    DataHoraMarcada = DateTime.Now.AddDays(-20),
-                    Desativado = true
+                // Busca o ID do paciente (Mock 88922 ou do serviço)
+                int idPaciente = 88922;
+                // Se tiver salvo no UserDataService: int.Parse(_userDataService.IdPacienteLegado ?? "0");
+
+                var dadosApi = await _apiService.GetHistoricoAgendamentosAsync(idPaciente);
+
+                _todosPendentes.Clear();
+                _todosFechados.Clear();
+
+                if (dadosApi != null)
+                {
+                    foreach (var item in dadosApi)
+                    {
+                        // A API (DTO) já diz se está desativado (Fechado) ou não
+                        if (item.Desativado)
+                            _todosFechados.Add(item);
+                        else
+                            _todosPendentes.Add(item);
+                    }
                 }
-            };
+
+                // Atualiza a tela com a aba atual
+                if (IsPendentesSelected) MostrarPendentes();
+                else MostrarFechados();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao carregar histórico: {ex.Message}");
+                await Shell.Current.DisplayAlert("Erro", "Não foi possível carregar seus agendamentos.", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         [RelayCommand]
@@ -92,7 +84,8 @@ namespace GamirSaudeApp.ViewModels
         {
             IsPendentesSelected = true;
             IsFechadosSelected = false;
-            AtualizarLista(_todosPendentes);
+            AgendamentosExibidos.Clear();
+            foreach (var item in _todosPendentes) AgendamentosExibidos.Add(item);
         }
 
         [RelayCommand]
@@ -100,28 +93,16 @@ namespace GamirSaudeApp.ViewModels
         {
             IsPendentesSelected = false;
             IsFechadosSelected = true;
-            AtualizarLista(_todosFechados);
-        }
-
-        private void AtualizarLista(List<AgendamentoHistorico> lista)
-        {
             AgendamentosExibidos.Clear();
-            foreach (var item in lista)
-            {
-                AgendamentosExibidos.Add(item);
-            }
+            foreach (var item in _todosFechados) AgendamentosExibidos.Add(item);
         }
 
         [RelayCommand]
         private async Task Voltar() => await Shell.Current.GoToAsync("..");
 
-        [RelayCommand]
-        private async Task Confirmar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Ação", $"Confirmar {agendamento.NomePrestador}", "OK");
-
-        [RelayCommand]
-        private async Task Remarcar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Ação", $"Remarcar {agendamento.NomePrestador}", "OK");
-
-        [RelayCommand]
-        private async Task Cancelar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Ação", $"Cancelar {agendamento.NomePrestador}", "OK");
+        // Comandos de ação (Placeholder)
+        [RelayCommand] private async Task Confirmar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Info", "Funcionalidade de Check-in em breve.", "OK");
+        [RelayCommand] private async Task Remarcar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Info", "Entre em contato para remarcar.", "OK");
+        [RelayCommand] private async Task Cancelar(AgendamentoHistorico agendamento) => await Shell.Current.DisplayAlert("Info", "Entre em contato para cancelar.", "OK");
     }
 }

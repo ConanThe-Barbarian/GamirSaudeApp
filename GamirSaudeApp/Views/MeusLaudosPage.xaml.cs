@@ -1,12 +1,13 @@
 using GamirSaudeApp.ViewModels;
 
-namespace GamirSaudeApp.Views;
-
-public partial class MeusLaudosPage : ContentPage
+namespace GamirSaudeApp.Views
 {
-    public MeusLaudosPage()
-    {
-        InitializeComponent();
-        BindingContext = new MeusLaudosViewModel();
+    public partial class MeusLaudosPage : ContentPage
+    {      
+        public MeusLaudosPage(MeusLaudosViewModel viewModel)
+        {
+            InitializeComponent();
+            BindingContext = viewModel;
+        }
     }
 }

@@ -6,6 +6,8 @@ using GamirSaudeApp.Views;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using GamirSaudeApp.Views.Popups;
+using CommunityToolkit.Maui.Views;
 
 namespace GamirSaudeApp.ViewModels
 {
@@ -235,31 +237,54 @@ namespace GamirSaudeApp.ViewModels
             IsBusy = true;
             try
             {
-                var horaSpan = TimeSpan.Parse(HorarioSelecionado.Hora, CultureInfo.InvariantCulture);
+                // 1. Prepara dados
+                if (!TimeSpan.TryParse(HorarioSelecionado.Hora, out var horaSpan))
+                    horaSpan = TimeSpan.ParseExact(HorarioSelecionado.Hora, "hh\\:mm", null);
+
                 var dataHora = _diaSelecionado.Date.Date.Add(horaSpan);
 
-                // CORREÇÃO: Usando os nomes da Unified DTO
                 var request = new AgendamentoRequest
                 {
-                    IdPacienteLegado = 88922, // Use IdPacienteLegado (pode pegar do _userDataService se tiver)
-                    IdMedico = 89,            // Antes era IdPrestadorMedico
-                    DataHorario = dataHora,   // Antes era DataHoraMarcada
-                    IdProcedimento = IdProcedimento,
+                    IdPacienteLegado = 88922,
+                    IdMedico = 89, // Mock
+                    IdProcedimento = IdProcedimento, // <--- Aqui está o ID do Exame
+                    DataHorario = dataHora,
                     Minutos = 30,
-                    Observacao = "Agendamento de Exame via App"
+                    Observacao = "Exame agendado via App"
                 };
 
-                
-                bool ok = await Shell.Current.DisplayAlert("Confirmar",
-                    $"Agendar {ExameNome}\nCom: {MedicoNome}\nEm: {_diaSelecionado.Date:dd/MM} às {HorarioSelecionado.Hora}\nValor: {ValorExame}?",
-                    "Sim", "Não");
+                // 2. Popup de Confirmação (Estilo novo)
+                string msg = $"Exame: {ExameNome}\n" +
+                             $"Médico: {MedicoNome}\n" +
+                             $"Data: {_diaSelecionado.Date:dd/MM/yyyy}\n" +
+                             $"Horário: {HorarioSelecionado.Hora}\n" +
+                             $"Valor: {ValorExame}";
 
-                if (!ok) { IsBusy = false; return; }
+                var popup = new ConfirmacaoAgendamentoPopup(msg);
+                var resultado = await Shell.Current.CurrentPage.ShowPopupAsync(popup);
 
-                var result = await _gamirApiService.AgendarConsultaAsync(request);
+                if (resultado is bool confirmado && confirmado)
+                {
+                    // 3. Chamada API
+                    var sucesso = await _gamirApiService.AgendarConsultaAsync(request);
 
-                if (result) await Shell.Current.GoToAsync(nameof(AgendamentoSucessoPage));
-                else await Shell.Current.DisplayAlert("Erro", "Falha ao agendar.", "OK");
+                    if (sucesso)
+                    {
+                        // 4. Popup de Sucesso + Redirecionar
+                        var popupSucesso = new AgendamentoSucessoPopup();
+                        await Shell.Current.CurrentPage.ShowPopupAsync(popupSucesso);
+
+                        await Shell.Current.GoToAsync("//DashboardPage");
+                    }
+                    else
+                    {
+                        await Shell.Current.DisplayAlert("Erro", "Falha ao agendar.", "OK");
+                    }
+                }
+                else
+                {
+                    IsBusy = false; // Cancelou
+                }
             }
             catch (Exception ex)
             {
@@ -267,10 +292,9 @@ namespace GamirSaudeApp.ViewModels
             }
             finally
             {
-                IsBusy = false;
+                if (IsBusy) IsBusy = false;
             }
         }
-
         // Comandos de Navegação
         [RelayCommand] private async Task Voltar() => await Shell.Current.GoToAsync("..");
         [RelayCommand] private async Task Home() => await Shell.Current.GoToAsync("//DashboardPage");

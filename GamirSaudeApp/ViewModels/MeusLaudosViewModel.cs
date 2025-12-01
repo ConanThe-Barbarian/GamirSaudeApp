@@ -1,112 +1,97 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GamirSaudeApp.Models;
-using GamirSaudeApp.Views; // Se precisar navegar
+using GamirSaudeApp.Services;
+using GamirSaudeApp.Views;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace GamirSaudeApp.ViewModels
 {
     public partial class MeusLaudosViewModel : BaseViewModel
     {
-        // Datas para o filtro
-        [ObservableProperty]
-        private DateTime dataInicio = DateTime.Today.AddMonths(-1); // Padrão: últimos 30 dias
+        private readonly GamirApiService _apiService;
+        private readonly UserDataService _userDataService;
+        private List<LaudoModel> _todosLaudosCache = new();
 
-        [ObservableProperty]
-        private DateTime dataFim = DateTime.Today;
-
-        // Lista completa (banco de dados simulado)
-        private List<LaudoModel> _todosLaudos;
-
-        // Lista exibida na tela
+        // LISTA VINCULADA AO XAML (O nome deve ser exato!)
         public ObservableCollection<LaudoModel> LaudosExibidos { get; } = new();
 
-        public MeusLaudosViewModel()
+        [ObservableProperty] private bool isBusy;
+        [ObservableProperty] private bool isEmpty;
+        [ObservableProperty] private DateTime dataInicio = DateTime.Today.AddMonths(-3);
+        [ObservableProperty] private DateTime dataFim = DateTime.Today;
+
+        public MeusLaudosViewModel(GamirApiService apiService, UserDataService userDataService)
         {
-            CarregarMocks();
-            FiltrarLaudos(); // Carrega a lista inicial
+            _apiService = apiService;
+            _userDataService = userDataService;
+            _ = InicializarDados();
         }
 
-        private void CarregarMocks()
+        private async Task InicializarDados()
         {
-            _todosLaudos = new List<LaudoModel>
+            if (IsBusy) return;
+            IsBusy = true;
+            try
             {
-                new LaudoModel {
-                    NomeExame = "HEMOGRAMA COMPLETO",
-                    DataExame = DateTime.Today.AddDays(-2),
-                    Status = "Liberado",
-                    NomeMedico = "Dr. João Silva",
-                    Especialidade = "Clínico Geral"
-                },
-                new LaudoModel {
-                    NomeExame = "RAIO X TÓRAX",
-                    DataExame = DateTime.Today.AddDays(-5),
-                    Status = "Liberado",
-                    NomeMedico = "Dra. Maria Souza",
-                    Especialidade = "Radiologia"
-                },
-                new LaudoModel {
-                    NomeExame = "RESSONÂNCIA MAGNÉTICA",
-                    DataExame = DateTime.Today,
-                    Status = "Pendente",
-                    NomeMedico = "Dr. Pedro Santos",
-                    Especialidade = "Neurologia"
-                }
-            };
+                // ID fixo para teste (garante que dados venham se a API estiver rodando)
+                int idPaciente = 88922;
+
+                var resultado = await _apiService.GetMeusLaudosAsync(idPaciente);
+
+                _todosLaudosCache = resultado?.ToList() ?? new List<LaudoModel>();
+
+                AplicarFiltro();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro: {ex.Message}");
+                // Opcional: Mostrar alerta se falhar
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         [RelayCommand]
-        private void FiltrarLaudos()
+        private async Task FiltrarLaudos()
         {
-            if (DataInicio > DataFim)
-            {
-                Shell.Current.DisplayAlert("Atenção", "A data inicial não pode ser maior que a final.", "OK");
-                return;
-            }
-
             IsBusy = true;
-
-            // Filtra a lista mockada
-            var filtrados = _todosLaudos
-                .Where(l => l.DataExame.Date >= DataInicio.Date && l.DataExame.Date <= DataFim.Date)
-                .OrderByDescending(l => l.DataExame) // Mais recentes primeiro
-                .ToList();
-
-            LaudosExibidos.Clear();
-            foreach (var laudo in filtrados)
-            {
-                LaudosExibidos.Add(laudo);
-            }
-
+            await Task.Delay(200);
+            AplicarFiltro();
             IsBusy = false;
         }
 
-        [RelayCommand]
-        private async Task VerLaudo(LaudoModel laudo)
+        private void AplicarFiltro()
         {
-            if (!laudo.IsLiberado) return;
+            LaudosExibidos.Clear();
+            var dataFimAjustada = DataFim.Date.AddDays(1).AddTicks(-1);
 
-            // NAVEGA PARA A NOVA TELA DE DETALHES
-            // Passamos os dados via URL
-            var navigationParameter = new Dictionary<string, object>
-            {
-                { "LaudoSelecionado", laudo }
-            };
+            var filtrados = _todosLaudosCache
+                .Where(l => l.DataExame >= DataInicio.Date && l.DataExame <= dataFimAjustada)
+                .OrderByDescending(l => l.DataExame).ToList();
 
-            // Usando passagem de objeto direta (requer registro correto no Shell)
-            // Ou passando propriedade a propriedade na URL se preferir simplicidade:
-            await Shell.Current.GoToAsync($"{nameof(VerLaudoPage)}?NomeExame={laudo.NomeExame}&NomeMedico={laudo.NomeMedico}&Especialidade={laudo.Especialidade}&Data={laudo.DataExame:dd/MM/yyyy}");
+            foreach (var item in filtrados) LaudosExibidos.Add(item);
+
+            // Define se mostra a mensagem de "Nenhum laudo"
+            IsEmpty = !LaudosExibidos.Any();
         }
-        [RelayCommand] private async Task Voltar() => await Shell.Current.GoToAsync("..");
 
-        // Barra Inferior
+        [RelayCommand]
+        private async Task AbrirLaudo(LaudoModel laudo)
+        {
+            if (laudo == null) return;
+            var navParam = new Dictionary<string, object> { { "Laudo", laudo } };
+            // Certifique-se que VerLaudoPage está registrada no AppShell
+            await Shell.Current.GoToAsync(nameof(VerLaudoPage), navParam);
+        }
+
+        // COMANDOS DA BARRA INFERIOR
+        [RelayCommand] private async Task Voltar() => await Shell.Current.GoToAsync("..");
         [RelayCommand] private async Task Home() => await Shell.Current.GoToAsync("//DashboardPage");
-        [RelayCommand] private async Task Chat() { }
+        [RelayCommand] private async Task Chat() => await Shell.Current.DisplayAlert("Em breve", "Chat indisponível.", "OK");
         [RelayCommand] private async Task Profile() => await Shell.Current.GoToAsync(nameof(ProfilePage));
         [RelayCommand] private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
     }

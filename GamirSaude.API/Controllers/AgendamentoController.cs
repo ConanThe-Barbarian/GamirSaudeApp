@@ -133,5 +133,64 @@ namespace GamirSaude.API.Controllers
             // 3. Retorno de Sucesso
             return Ok(new { message = "Agendamento realizado com sucesso!", protocolo = Guid.NewGuid() });
         }
+
+        // ============================================================
+        // 6. HISTÓRICO DE AGENDAMENTOS
+        // ============================================================
+        [HttpGet("historico/{idPaciente}")]
+        public IActionResult GetHistorico(int idPaciente)
+        {
+            // MOCK: Simulando busca no banco do legado
+            var lista = new List<AgendamentoHistoricoDto>
+            {
+                // 1. O Agendamento "Recente" (Futuro)
+                new AgendamentoHistoricoDto {
+                    Id = 101,
+                    NomePrestador = "Dr. Estranho",
+                    Especialidade = "Cardiologia",
+                    Procedimento = "CONSULTA MÉDICA",
+                    DataHoraMarcada = DateTime.Now.AddDays(2).AddHours(4), // Daqui a 2 dias
+                    Valor = 350.00m,
+                    Status = "Confirmado",
+                    Desativado = false // Aba Pendentes
+                },
+                
+                // 2. Um Exame Pendente
+                new AgendamentoHistoricoDto {
+                    Id = 102,
+                    NomePrestador = "Laboratório Central",
+                    Especialidade = "Diagnóstico",
+                    Procedimento = "HEMOGRAMA COMPLETO",
+                    DataHoraMarcada = DateTime.Now.AddDays(5).AddHours(1),
+                    Valor = 80.00m,
+                    Status = "Aguardando",
+                    Desativado = false // Aba Pendentes
+                },
+
+                // 3. Histórico Passado (Fechado)
+                new AgendamentoHistoricoDto {
+                    Id = 99,
+                    NomePrestador = "Dra. Grey",
+                    Especialidade = "Cardiologia",
+                    Procedimento = "CONSULTA ROTINA",
+                    DataHoraMarcada = DateTime.Now.AddDays(-20),
+                    Valor = 300.00m,
+                    Status = "Realizado",
+                    Desativado = true // Aba Fechados
+                },
+                 new AgendamentoHistoricoDto {
+                    Id = 98,
+                    NomePrestador = "Dr. House",
+                    Especialidade = "Clínica Geral",
+                    Procedimento = "CHECKUP",
+                    DataHoraMarcada = DateTime.Now.AddMonths(-1),
+                    Valor = 500.00m,
+                    Status = "Cancelado",
+                    Desativado = true // Aba Fechados
+                }
+            };
+
+            return Ok(lista);
+        }
     }
 }

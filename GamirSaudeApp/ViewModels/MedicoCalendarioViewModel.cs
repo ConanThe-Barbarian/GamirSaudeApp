@@ -281,7 +281,6 @@ namespace GamirSaudeApp.ViewModels
             }
         }
         
-
         [RelayCommand] private async Task Voltar() => await Shell.Current.GoToAsync("..");
 
         // Nav Bar

@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace GamirSaudeApp.Models
 {
-    // Modelos visuais usados nas listas e telas
+    // ============================================================
+    // OBJETOS VISUAIS E DE RETORNO (API -> APP)
+    // ============================================================
+
     public class Especialidade
     {
         public string Nome { get; set; }
@@ -31,7 +35,32 @@ namespace GamirSaudeApp.Models
         public bool Disponivel { get; set; }
     }
 
-    // Requests para a API
+    // --- NOVO: HISTÓRICO UNIFICADO AQUI ---
+    public class AgendamentoHistorico
+    {
+        public int Id { get; set; }
+        public string NomePrestador { get; set; }
+        public string Especialidade { get; set; }
+        public string Procedimento { get; set; }
+        public DateTime DataHoraMarcada { get; set; }
+        public decimal Valor { get; set; }
+        public string Status { get; set; } // "Agendado", "Realizado", "Cancelado"
+        public bool Desativado { get; set; } // Define se vai para aba "Fechados"
+
+        // Propriedades Visuais (Helpers)
+        public string ValorFormatado => Valor > 0 ? $"R$ {Valor:F2}" : "Grátis";
+
+        public bool IsPendente => !Desativado;
+        public bool IsFechado => Desativado;
+
+        public string StatusTextColor => Status == "Cancelado" ? "#EB5757" : "#0098DA";
+        public string StatusColor => Status == "Cancelado" ? "#FFEEEE" : "#E3E9FF";
+    }
+
+    // ============================================================
+    // REQUISIÇÕES (APP -> API)
+    // ============================================================
+
     public class DiasDisponiveisRequest
     {
         public int IdMedico { get; set; }

@@ -5,90 +5,100 @@
              x:Class="GamirSaudeApp.Views.VerLaudoPage"
              x:DataType="viewmodels:VerLaudoViewModel"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#E5E7EB">
-    <Grid RowDefinitions="Auto, *">
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#F5F5F5">
 
-        <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="80" Padding="20,10,20,0">
+    <Grid RowDefinitions="80, *">
+
+        <Grid Grid.Row="0" BackgroundColor="#0098DA" Padding="20,10,20,0">
             <Grid ColumnDefinitions="Auto, *">
-                <ImageButton Grid.Column="0" HeightRequest="25" WidthRequest="25" HorizontalOptions="Start" VerticalOptions="Center" Command="{Binding VoltarCommand}" BackgroundColor="Transparent">
+                <ImageButton Grid.Column="0" 
+                             HeightRequest="30" WidthRequest="30" 
+                             HorizontalOptions="Start" VerticalOptions="Center" 
+                             Command="{Binding VoltarCommand}" 
+                             BackgroundColor="Transparent">
                     <ImageButton.Source>
-                        <FontImageSource Glyph="&lt;" Color="White" Size="30"/>
+                        <FontImageSource Glyph="&lt;" Color="White" Size="35"/>
                     </ImageButton.Source>
                 </ImageButton>
-                <Label Grid.Column="1" Text="Detalhes do Laudo" TextColor="White" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" Margin="-25,0,0,0"/>
+
+                <Label Grid.Column="1" Text="Detalhes do Laudo" TextColor="White" 
+                       FontSize="20" FontAttributes="Bold" 
+                       HorizontalOptions="Center" VerticalOptions="Center" 
+                       Margin="-30,0,0,0"/>
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="1" Padding="25">
+        <ScrollView Grid.Row="1" Padding="20">
+            <VerticalStackLayout Spacing="20">
 
-            <Border StrokeShape="RoundRectangle 15" 
-                    StrokeThickness="0" 
-                    BackgroundColor="White" 
-                    VerticalOptions="Center" 
-                    Padding="25">
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.1"/>
-                </Border.Shadow>
+                <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="20">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Opacity="0.05" Radius="5" Offset="0,2"/>
+                    </Border.Shadow>
 
-                <VerticalStackLayout Spacing="15">
+                    <VerticalStackLayout Spacing="15">
 
-                    <Label Text="{Binding NomeExame}" 
-                           TextColor="Black" 
-                           FontSize="22" 
-                           FontAttributes="None" />
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Exame" TextColor="#999999" FontSize="12"/>
+                            <Label Text="{Binding NomeExame}" TextColor="#0098DA" FontSize="22" FontAttributes="Bold"/>
+                        </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Nome do Médico" TextColor="Black" FontSize="14"/>
-                        <Label Text="{Binding NomeMedico}" TextColor="#555555" FontSize="14"/>
+                        <BoxView HeightRequest="1" Color="#EEEEEE"/>
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="15">
+
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
+                                <Label Text="Médico/Local" TextColor="#999999" FontSize="12"/>
+                                <Label Text="{Binding NomeMedico}" TextColor="#333333" FontAttributes="Bold"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                <Label Text="Especialidade" TextColor="#999999" FontSize="12"/>
+                                <Label Text="{Binding Especialidade}" TextColor="#333333" FontAttributes="Bold"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="2">
+                                <Label Text="Data Realização" TextColor="#999999" FontSize="12"/>
+                                <Label Text="{Binding DataExame, StringFormat='{0:dd/MM/yyyy}'}" TextColor="#333333" FontAttributes="Bold"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="2">
+                                <Label Text="Status" TextColor="#999999" FontSize="12"/>
+                                <Border BackgroundColor="{Binding CorStatus}" StrokeThickness="0" StrokeShape="RoundRectangle 5" HorizontalOptions="Start" Padding="10,4">
+                                    <Label Text="{Binding Status}" TextColor="White" FontSize="12" FontAttributes="Bold"/>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
                     </VerticalStackLayout>
+                </Border>
 
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Especialidade" TextColor="Black" FontSize="16" FontAttributes="Bold"/>
-                        <Label Text="{Binding Especialidade}" TextColor="#555555" FontSize="14"/>
-                    </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,10,0,0">
 
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Data da consulta" TextColor="Black" FontSize="14"/>
-                        <Label Text="{Binding DataExame}" TextColor="#555555" FontSize="14"/>
-                    </VerticalStackLayout>
+                    <Button Grid.Column="0" 
+                            Text="Baixar PDF" 
+                            Command="{Binding BaixarPdfCommand}"
+                            BackgroundColor="#0098DA" 
+                            TextColor="White" 
+                            HeightRequest="50" 
+                            CornerRadius="25" 
+                            FontAttributes="Bold"/>
 
-                    <BoxView HeightRequest="20" Color="Transparent"/>
+                    <Button Grid.Column="1" 
+                            Text="Compartilhar" 
+                            Command="{Binding CompartilharCommand}"
+                            BackgroundColor="White" 
+                            TextColor="#0098DA" 
+                            BorderColor="#0098DA" 
+                            BorderWidth="1"
+                            HeightRequest="50" 
+                            CornerRadius="25" 
+                            FontAttributes="Bold"/>
+                </Grid>
 
-                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
-
-                        <Button Grid.Column="0"
-                                Text="Baixar PDF"
-                                Command="{Binding BaixarPdfCommand}"
-                                BackgroundColor="#0098DA"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                FontSize="13"
-                                CornerRadius="8"
-                                HeightRequest="45">
-                            <Button.ImageSource>
-                                <FontImageSource Glyph="⬇" Color="White" Size="16"/>
-                            </Button.ImageSource>
-                        </Button>
-
-                        <Button Grid.Column="1"
-                                Text="Compartilhar"
-                                Command="{Binding CompartilharCommand}"
-                                BackgroundColor="#0098DA"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                FontSize="13"
-                                CornerRadius="8"
-                                HeightRequest="45">
-                            <Button.ImageSource>
-                                <FontImageSource Glyph="🔗" Color="White" Size="16"/>
-                            </Button.ImageSource>
-                        </Button>
-
-                    </Grid>
-
-                </VerticalStackLayout>
-            </Border>
-        </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
 
     </Grid>
 </ContentPage>

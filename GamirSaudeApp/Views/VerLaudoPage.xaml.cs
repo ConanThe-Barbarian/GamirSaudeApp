@@ -1,7 +1,13 @@
 using GamirSaudeApp.ViewModels;
 
-namespace GamirSaudeApp.Views;
-public partial class VerLaudoPage : ContentPage
+namespace GamirSaudeApp.Views
 {
-    public VerLaudoPage() { InitializeComponent(); BindingContext = new VerLaudoViewModel(); }
+    public partial class VerLaudoPage : ContentPage
+    {
+        public VerLaudoPage(VerLaudoViewModel viewModel)
+        {
+            InitializeComponent();
+            BindingContext = viewModel;
+        }
+    }
 }
