@@ -1,169 +1,166 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GamirSaudeApp.Models;
 using GamirSaudeApp.Services;
 using GamirSaudeApp.Views;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace GamirSaudeApp.ViewModels
 {
     public partial class DashboardViewModel : BaseViewModel
     {
-        private readonly UserDataService _userDataService;
         private readonly GamirApiService _apiService;
+        private readonly UserDataService _userDataService;
 
-        // --- PROPRIEDADES ---
+        [ObservableProperty]
         private string nomeUsuario;
-        public string NomeUsuario
-        {
-            get => nomeUsuario;
-            set => SetProperty(ref nomeUsuario, value);
-        }
 
+        [ObservableProperty]
+        private ImageSource fotoPerfilSource;
+
+        // NOVA PROPRIEDADE: PONTOS
+        [ObservableProperty]
         private int pontosFidelidade;
-        public int PontosFidelidade
-        {
-            get => pontosFidelidade;
-            set => SetProperty(ref pontosFidelidade, value);
-        }
 
-        private bool isContaVerificada;
-        public bool IsContaVerificada
-        {
-            get => isContaVerificada;
-            set => SetProperty(ref isContaVerificada, value);
-        }
+        public ObservableCollection<DashboardBannerItem> Banners { get; } = new();
 
-        private bool isContaNaoVerificada;
-        public bool IsContaNaoVerificada
+        public DashboardViewModel(GamirApiService apiService, UserDataService userDataService)
         {
-            get => isContaNaoVerificada;
-            set => SetProperty(ref isContaNaoVerificada, value);
-        }
-
-        // --- IMAGEM ---
-        private ImageSource fotoUsuario;
-        public ImageSource FotoUsuario
-        {
-            get => fotoUsuario;
-            set => SetProperty(ref fotoUsuario, value);
-        }
-
-        private bool temFoto;
-        public bool TemFoto
-        {
-            get => temFoto;
-            set => SetProperty(ref temFoto, value);
-        }
-
-        private bool naoTemFoto;
-        public bool NaoTemFoto
-        {
-            get => naoTemFoto;
-            set => SetProperty(ref naoTemFoto, value);
-        }
-
-        private int _totalAgendamentosRealizados = 0;
-
-        public DashboardViewModel(UserDataService userDataService, GamirApiService apiService)
-        {
-            _userDataService = userDataService;
             _apiService = apiService;
+            _userDataService = userDataService;
+
+            CarregarDadosUsuario();
+            _ = CarregarDashboard();
         }
 
-        // COMANDO DISPARADO AO ABRIR A TELA
-        [RelayCommand]
-        private async Task PageAppearing()
+        private void CarregarDadosUsuario()
         {
-            await CarregarDadosUsuario();
-        }
+            // 1. Nome
+            string nomeCompleto = _userDataService.NomeUsuario ?? "Paciente";
+            var partesNome = nomeCompleto.Split(' ');
+            NomeUsuario = partesNome.Length > 0 ? partesNome[0] : nomeCompleto;
 
-        private async Task CarregarDadosUsuario()
-        {
-            // 1. Dados Básicos do Cofre
-            NomeUsuario = _userDataService.NomeUsuario ?? "Visitante";
-            IsContaVerificada = _userDataService.ContaVerificada;
-            IsContaNaoVerificada = !IsContaVerificada;
-            PontosFidelidade = IsContaVerificada ? 150 : 0;
+            // 2. Pontos Fidelidade (Mock - Futuramente virá da API)
+            pontosFidelidade = 1250;
 
-            // 2. SEGURANÇA: Se não tem foto no cofre, tenta buscar na API
-            if (string.IsNullOrEmpty(_userDataService.FotoPerfil) && _userDataService.IdUserApp > 0)
+            // 3. Foto
+            string fotoString = _userDataService.FotoPerfil;
+            if (string.IsNullOrEmpty(fotoString))
             {
-                try
-                {
-                    var perfil = await _apiService.GetUserProfileAsync(_userDataService.IdUserApp);
-                    if (perfil != null && !string.IsNullOrEmpty(perfil.FotoPerfil))
-                    {
-                        _userDataService.FotoPerfil = perfil.FotoPerfil; // Atualiza cofre
-                    }
-                }
-                catch { } // Falha silenciosa, mantém sem foto
-            }
-
-            // 3. Processa a imagem para exibição
-            AtualizarImagemVisual();
-        }
-
-        private void AtualizarImagemVisual()
-        {
-            if (!string.IsNullOrEmpty(_userDataService.FotoPerfil))
-            {
-                try
-                {
-                    byte[] imageBytes = Convert.FromBase64String(_userDataService.FotoPerfil);
-                    FotoUsuario = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-                    TemFoto = true;
-                    NaoTemFoto = false;
-                }
-                catch
-                {
-                    TemFoto = false;
-                    NaoTemFoto = true;
-                }
+                FotoPerfilSource = "profile_icon.png";
             }
             else
             {
-                TemFoto = false;
-                NaoTemFoto = true;
+                try
+                {
+                    if (!fotoString.StartsWith("http"))
+                    {
+                        byte[] imageBytes = Convert.FromBase64String(fotoString);
+                        FotoPerfilSource = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    }
+                    else
+                    {
+                        FotoPerfilSource = ImageSource.FromUri(new Uri(fotoString));
+                    }
+                }
+                catch
+                {
+                    FotoPerfilSource = "profile_icon.png";
+                }
             }
         }
 
-        private async Task<bool> PodeAgendar()
+        private async Task CarregarDashboard()
         {
-            if (IsContaVerificada) return true;
-            if (_totalAgendamentosRealizados >= 1)
+            try
             {
-                await Shell.Current.DisplayAlert("Limite", "Verifique sua conta.", "OK");
-                return false;
+                Banners.Clear();
+
+                var proximo = await ObterProximoAgendamento();
+
+                if (proximo != null)
+                {
+                    Banners.Add(new DashboardBannerItem
+                    {
+                        Titulo = "Sua Próxima Consulta",
+                        Descricao = $"{proximo.NomePrestador} - {proximo.Especialidade}",
+                        DetalhePrincipal = proximo.DataHoraMarcada.ToString("dd/MM 'às' HH:mm"),
+                        Icone = "calendar_icon.png",
+                        CorFundo = Color.FromArgb("#0098DA"),
+                        IsAgendamento = true
+                    });
+                }
+                else
+                {
+                    Banners.Add(new DashboardBannerItem
+                    {
+                        Titulo = "Sem Agendamentos",
+                        Descricao = "Não há consultas futuras.",
+                        DetalhePrincipal = "Agendar Agora",
+                        Icone = "calendar_icon.png",
+                        CorFundo = Color.FromArgb("#95A5A6"),
+                        IsAgendamento = false
+                    });
+                }
+
+                Banners.Add(new DashboardBannerItem
+                {
+                    Titulo = "Preços Populares",
+                    Descricao = "Qualidade acessível.",
+                    DetalhePrincipal = "A partir de R$ 75,00",
+                    Icone = "home_icon.png",
+                    CorFundo = Color.FromArgb("#27AE60"),
+                    IsAgendamento = false
+                });
+
+                Banners.Add(new DashboardBannerItem
+                {
+                    Titulo = "Aviso Importante",
+                    Descricao = "Dra. Maristela e Dra. Karina",
+                    DetalhePrincipal = "Agende por Telefone",
+                    Icone = "chat_icon.png",
+                    CorFundo = Color.FromArgb("#E67E22"),
+                    IsAgendamento = false
+                });
             }
-            return true;
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro Dashboard: {ex.Message}");
+            }
         }
 
-        // --- NAVEGAÇÃO ---
-        [RelayCommand]
-        private async Task NavigateToAgendarConsulta()
+        private async Task<AgendamentoHistorico> ObterProximoAgendamento()
         {
-            if (await PodeAgendar()) await Shell.Current.GoToAsync(nameof(AgendarConsultaPage));
+            try
+            {
+                int idPaciente = 88922;
+                var historico = await _apiService.GetHistoricoAgendamentosAsync(idPaciente);
+
+                if (historico != null)
+                {
+                    return historico
+                        .Where(a => a.DataHoraMarcada > DateTime.Now && !a.Desativado)
+                        .OrderBy(a => a.DataHoraMarcada)
+                        .FirstOrDefault();
+                }
+            }
+            catch { }
+            return null;
         }
 
-        [RelayCommand]
-        private async Task NavigateToAgendarExame()
-        {
-            if (await PodeAgendar()) await Shell.Current.GoToAsync(nameof(AgendarExamePage));
-        }
+        // COMANDOS
+        [RelayCommand] private async Task NovaConsulta() => await Shell.Current.GoToAsync(nameof(AgendarConsultaPage));
+        [RelayCommand] private async Task NovoExame() => await Shell.Current.GoToAsync(nameof(AgendarExamePage));
+        [RelayCommand] private async Task MeusAgendamentos() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
+        [RelayCommand] private async Task MeusLaudos() => await Shell.Current.GoToAsync(nameof(MeusLaudosPage));
+        [RelayCommand] private async Task VerDetalhesAgendamento() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
+        [RelayCommand] private async Task IrParaPerfil() => await Shell.Current.GoToAsync(nameof(ProfilePage));
 
-        [RelayCommand] private async Task NavigateToMeusAgendamentos() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
-
-        [RelayCommand]
-        private async Task NavigateToMeusLaudos()
-        {
-            if (!IsContaVerificada) { await Shell.Current.DisplayAlert("Restrito", "Verifique sua conta.", "OK"); return; }
-            await Shell.Current.GoToAsync(nameof(MeusLaudosPage));
-        }
-
-        [RelayCommand] private async Task NavigateToProfile() => await Shell.Current.GoToAsync(nameof(ProfilePage));
-
+        // BARRA INFERIOR
         [RelayCommand] private async Task Home() { }
-        [RelayCommand] private async Task Chat() { await Shell.Current.DisplayAlert("Em Breve", "Chat em desenvolvimento.", "OK"); }
+        [RelayCommand] private async Task Chat() => await Shell.Current.DisplayAlert("Contato", "Ligue para: (21) 9999-9999", "OK");
+        [RelayCommand] private async Task Profile() => await Shell.Current.GoToAsync(nameof(ProfilePage));
         [RelayCommand] private async Task Calendar() => await Shell.Current.GoToAsync(nameof(HistoricoPage));
     }
 }

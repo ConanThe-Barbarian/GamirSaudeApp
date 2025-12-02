@@ -2,172 +2,137 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:GamirSaudeApp.ViewModels"
+             xmlns:models="clr-namespace:GamirSaudeApp.Models"
              x:Class="GamirSaudeApp.Views.DashboardPage"
              x:DataType="viewmodels:DashboardViewModel"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="White">
+             BackgroundColor="#F9F9F9">
 
-    <!-- GATILHO: Recarrega dados ao voltar para a tela (caso tenha verificado no perfil) -->
-    <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding PageAppearingCommand}" 
-                                        xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"/>
-    </ContentPage.Behaviors>
+    <Grid RowDefinitions="*, 60" RowSpacing="0">
 
-    <Grid RowDefinitions="Auto, *, Auto">
+        <ScrollView Grid.Row="0">
+            <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="0,0,0,20">
 
-        <!-- 1. CABEÇALHO -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Padding="20,15" BackgroundColor="White">
-            <HorizontalStackLayout Grid.Column="0" Spacing="10">
-                <Frame HeightRequest="50" WidthRequest="50" CornerRadius="25" Padding="0" IsClippedToBounds="True" BorderColor="#D6E4FF">
-                    <Grid>
-                        <Image Source="user_avatar.png" Aspect="AspectFill" BackgroundColor="#E3E9FF" IsVisible="{Binding NaoTemFoto}"/>
+                <Grid Grid.Row="0" BackgroundColor="#0098DA" HeightRequest="210" Padding="25,30,25,0">
 
-                        <Image Source="{Binding FotoUsuario}" Aspect="AspectFill" IsVisible="{Binding TemFoto}"/>
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Start" Margin="0,20,0,0">
+
+                        <HorizontalStackLayout Grid.Column="0" Spacing="15" VerticalOptions="Center">
+                            <Border StrokeShape="RoundRectangle 35" HeightRequest="70" WidthRequest="70" 
+                                    StrokeThickness="2" Stroke="White" BackgroundColor="White">
+                                <Image Source="{Binding FotoPerfilSource}" 
+                                       Aspect="AspectFill" HeightRequest="70" WidthRequest="70"/>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding IrParaPerfilCommand}"/>
+                                </Border.GestureRecognizers>
+                            </Border>
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="Olá," TextColor="#CCFFFFFF" FontSize="16"/>
+                                <Label Text="{Binding NomeUsuario}" TextColor="White" FontSize="24" FontAttributes="Bold"/>
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+
+                        <Border Grid.Column="1" StrokeShape="RoundRectangle 20" StrokeThickness="1" Stroke="#80FFFFFF" 
+                                BackgroundColor="#33FFFFFF" Padding="12,8" VerticalOptions="Center">
+                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                <Label Text="⭐" TextColor="#FFD700" FontSize="30" VerticalOptions="Center"/>
+                                <VerticalStackLayout Spacing="0">
+                                    <Label Text="{Binding PontosFidelidade}" TextColor="White" FontAttributes="Bold" FontSize="16" HorizontalOptions="End"/>
+                                    <Label Text="Pontos" TextColor="#E0E0E0" FontSize="10" HorizontalOptions="End"/>
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                        </Border>
+
                     </Grid>
-                </Frame>
-                
-                <VerticalStackLayout VerticalOptions="Center">
-                    <Label Text="{Binding NomeUsuario, StringFormat='Olá, {0}'}" TextColor="Black" FontAttributes="Bold" FontSize="16"/>
-                    <Label Text="{Binding PontosFidelidade, StringFormat='{0} Pontos'}" TextColor="#666666" FontSize="12"/>
+                </Grid>
+
+                <VerticalStackLayout Grid.Row="1" Margin="0,-1,15,0" Spacing="10">
+                    <CarouselView ItemsSource="{Binding Banners}" HeightRequest="175" PeekAreaInsets="5" Loop="False" IndicatorView="indicatorView">
+                        <CarouselView.ItemTemplate>
+                            <DataTemplate x:DataType="models:DashboardBannerItem">
+                                <Border StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="{Binding CorFundo}" Margin="10,0" Padding="20">
+                                    <Border.Shadow>
+                                        <Shadow Brush="Black" Opacity="0.25" Radius="10" Offset="0,5"/>
+                                    </Border.Shadow>
+                                    <Grid RowDefinitions="Auto, *, Auto" ColumnDefinitions="*, Auto">
+                                        <Image Grid.RowSpan="3" Grid.ColumnSpan="2" Source="{Binding Icone}" Opacity="0.15" Aspect="AspectFit" HeightRequest="100" HorizontalOptions="End" VerticalOptions="Center" TranslationX="10"/>
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Titulo}" TextColor="White" Opacity="0.9" FontSize="13" FontAttributes="Bold" TextTransform="Uppercase"/>
+                                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" VerticalOptions="Center" Spacing="4">
+                                            <Label Text="{Binding DetalhePrincipal}" TextColor="White" FontSize="22" FontAttributes="Bold" LineBreakMode="WordWrap"/>
+                                            <Label Text="{Binding Descricao}" TextColor="White" FontSize="13" LineBreakMode="TailTruncation"/>
+                                        </VerticalStackLayout>
+                                        <Button Grid.Row="2" Grid.ColumnSpan="2" Text="Ver Detalhes" IsVisible="{Binding IsAgendamento}" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DashboardViewModel}}, Path=VerDetalhesAgendamentoCommand}" BackgroundColor="White" TextColor="{Binding CorFundo}" FontAttributes="Bold" FontSize="12" CornerRadius="15" HeightRequest="35" HorizontalOptions="Start" Margin="0,10,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CarouselView.ItemTemplate>
+                    </CarouselView>
+                    <IndicatorView x:Name="indicatorView" IndicatorColor="#DDDDDD" SelectedIndicatorColor="#0098DA" HorizontalOptions="Center"/>
                 </VerticalStackLayout>
-            </HorizontalStackLayout>
 
-            <ImageButton Grid.Column="2" Source="settings_icon.png" HeightRequest="30" WidthRequest="30" Command="{Binding NavigateToProfileCommand}"/>
-        </Grid>
-
-        <!-- 2. CONTEÚDO PRINCIPAL -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="0">
-
-                <!-- ÁREA DE DESTAQUE (Muda conforme status) -->
-                <Grid>
-                    <!-- Fundo Azul decorativo -->
-                    <BoxView Color="#E3E9FF" HeightRequest="280" VerticalOptions="Start" IsVisible="{Binding IsContaVerificada}"/>
-
-                    <!-- CASO 1: CONTA VERIFICADA (Card Azul - Último Agendamento) -->
-                    <Border IsVisible="{Binding IsContaVerificada}"
-                            BackgroundColor="White" 
-                            StrokeShape="RoundRectangle 0" 
-                            StrokeThickness="0"
-                            HeightRequest="220"
-                            WidthRequest="320"
-                            Margin="0,40,0,40"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center">
+                <Grid Grid.Row="2" RowDefinitions="Auto, Auto" ColumnDefinitions="*,*" ColumnSpacing="15" RowSpacing="15" Padding="25,20">
+                    <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 15" BackgroundColor="White" HeightRequest="110" StrokeThickness="0">
                         <Border.Shadow>
-                            <Shadow Brush="Gray" Offset="2,2" Radius="5" Opacity="0.2"/>
+                            <Shadow Brush="Black" Opacity="0.05" Radius="5" Offset="0,2"/>
                         </Border.Shadow>
-                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
-                            <Label Text="Ultimo" TextColor="#8EA6CC" FontSize="22" HorizontalOptions="Center"/>
-                            <Label Text="Agendamento" TextColor="#8EA6CC" FontSize="22" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NovaConsultaCommand}"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                            <Image Source="ic_nova_consulta.jpg" HeightRequest="40" Aspect="AspectFit"/>
+                            <Label Text="Nova Consulta" TextColor="#0098DA" FontAttributes="Bold" FontSize="14"/>
                         </VerticalStackLayout>
                     </Border>
-
-                    <!-- CASO 2: CONTA NÃO VERIFICADA (Card Amarelo - Aviso) -->
-                    <Border IsVisible="{Binding IsContaNaoVerificada}"
-                            BackgroundColor="#E8D8B0" 
-                            Stroke="#F2994A"
-                            StrokeThickness="2"
-                            StrokeShape="RoundRectangle 15" 
-                            HeightRequest="180"
-                            WidthRequest="320"
-                            Margin="0,40,0,40"
-                            Padding="20"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center">
+                    <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 15" BackgroundColor="White" HeightRequest="110" StrokeThickness="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Opacity="0.05" Radius="5" Offset="0,2"/>
+                        </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <!-- Clicar no aviso leva para verificar -->
-                            <TapGestureRecognizer Command="{Binding NavigateToProfileCommand}"/>
+                            <TapGestureRecognizer Command="{Binding NovoExameCommand}"/>
                         </Border.GestureRecognizers>
-
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="15">
-                            <Label Text="Sua Conta Nao Esta Verificada" 
-                                   TextColor="#F2994A" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold" 
-                                   HorizontalTextAlignment="Center"/>
-
-                            <Label Text="Acesse Seu Perfil Para Verififcar Sua Conta E Ter Acesso A Todos Os Recursos" 
-                                   TextColor="Black" 
-                                   FontSize="14" 
-                                   HorizontalTextAlignment="Center"/>
+                        <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                            <Image Source="ic_novo_exame.png" HeightRequest="50" Aspect="AspectFit"/>
+                            <Label Text="Agendar Exame" TextColor="#0098DA" FontAttributes="Bold" FontSize="14"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 15" BackgroundColor="White" HeightRequest="110" StrokeThickness="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Opacity="0.05" Radius="5" Offset="0,2"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding MeusAgendamentosCommand}"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                            <Image Source="ic_meus_agendamentos.png" HeightRequest="40" Aspect="AspectFit"/>
+                            <Label Text="Meus Agendamentos" TextColor="#0098DA" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 15" BackgroundColor="White" HeightRequest="110" StrokeThickness="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Opacity="0.05" Radius="5" Offset="0,2"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding MeusLaudosCommand}"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                            <Image Source="ic_resultados_laudos.png" HeightRequest="50" Aspect="AspectFit"/>
+                            <Label Text="Resultados (Laudos)" TextColor="#0098DA" FontAttributes="Bold" FontSize="12" HorizontalTextAlignment="Center"/>
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
 
-                <!-- BOTÕES DE AÇÃO -->
-                <VerticalStackLayout Padding="30,10" Spacing="15" BackgroundColor="White">
-
-                    <Button Text="Agendar consulta"
-                            Command="{Binding NavigateToAgendarConsultaCommand}"
-                            BackgroundColor="#D6E4FF"
-                            TextColor="#0098DA"
-                            FontAttributes="Bold"
-                            CornerRadius="10"
-                            HeightRequest="55"/>
-
-                    <Button Text="Agendar exame"
-                            Command="{Binding NavigateToAgendarExameCommand}"
-                            BackgroundColor="#D6E4FF"
-                            TextColor="#0098DA"
-                            FontAttributes="Bold"
-                            CornerRadius="10"
-                            HeightRequest="55"/>
-
-                    <Button Text="Meus agendamentos"
-                            Command="{Binding NavigateToMeusAgendamentosCommand}"
-                            BackgroundColor="#E0E0E0"
-                            TextColor="#0098DA"
-                            FontAttributes="Bold"
-                            CornerRadius="10"
-                            BorderColor="#0098DA"
-                            BorderWidth="2"
-                            HeightRequest="55"/>
-
-                    <Button Text="Meus laudos"
-                            Command="{Binding NavigateToMeusLaudosCommand}"
-                            BackgroundColor="#D6E4FF"
-                            TextColor="#0098DA"
-                            FontAttributes="Bold"
-                            CornerRadius="10"
-                            HeightRequest="55"/>
-
-                    <Button Text="Contato"
-                            BackgroundColor="#D6E4FF"
-                            TextColor="#0098DA"
-                            FontAttributes="Bold"
-                            CornerRadius="10"
-                            HeightRequest="55"/>
-
-                    <BoxView HeightRequest="80" Color="Transparent"/>
-                </VerticalStackLayout>
-
-            </VerticalStackLayout>
+            </Grid>
         </ScrollView>
 
-        <!-- 3. BARRA INFERIOR -->
-        <Border Grid.Row="2" Margin="20,10,20,20" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="#0098DA" HeightRequest="60" VerticalOptions="End">
+        <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" Padding="0" Margin="0" VerticalOptions="Fill">
+            <Border.Shadow>
+                <Shadow Brush="Black" Opacity="0.1" Radius="10" Offset="0,-5"/>
+            </Border.Shadow>
             <Grid ColumnDefinitions="*,*,*,*">
-                <Image Grid.Column="0" Source="home_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding HomeCommand}" />
-                    </Image.GestureRecognizers>
-                </Image>
-                <Image Grid.Column="1" Source="chat_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding ChatCommand}" />
-                    </Image.GestureRecognizers>
-                </Image>
-                <Image Grid.Column="2" Source="profile_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding NavigateToProfileCommand}" />
-                    </Image.GestureRecognizers>
-                </Image>
-                <Image Grid.Column="3" Source="calendar_icon.png" HeightRequest="25" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding CalendarCommand}" />
-                    </Image.GestureRecognizers>
-                </Image>
+                <ImageButton Grid.Column="0" Source="home_icon.png" HeightRequest="28" BackgroundColor="Transparent" Command="{Binding HomeCommand}" VerticalOptions="Center"/>
+                <ImageButton Grid.Column="1" Source="chat_icon.png" HeightRequest="28" BackgroundColor="Transparent" Command="{Binding ChatCommand}" VerticalOptions="Center"/>
+                <ImageButton Grid.Column="2" Source="profile_icon.png" HeightRequest="28" BackgroundColor="Transparent" Command="{Binding ProfileCommand}" VerticalOptions="Center"/>
+                <ImageButton Grid.Column="3" Source="calendar_icon.png" HeightRequest="28" BackgroundColor="Transparent" Command="{Binding CalendarCommand}" VerticalOptions="Center"/>
             </Grid>
         </Border>
 
